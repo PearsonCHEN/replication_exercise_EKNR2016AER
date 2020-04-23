@@ -11,5 +11,5 @@ Julia is an outstanding young programming language for scientific computation. J
 Hat algebra transforms the traditional dynamic economic system to that of representation of flow variables and "changes". This method helps shy away from unclear definition of exogenous variables, or fundamentals(Caliendo et al., 2019) like capital, trade cost and productivity shocks etc.
 
 # Reference
-Eaton, Jonathan, Samuel Kortum, Brent Neiman, and John Romalis. 2016. "Trade and the Global Recession." American Economic Review, 106 (11): 3401-38. DOI: 10.1257/aer.20101557
+Eaton, Jonathan, Samuel Kortum, Brent Neiman, and John Romalis. 2016. "Trade and the Global Recession." American Economic Review, 106 (11): 3401-38. DOI: 10.1257/aer.20101557  
 Trade and labor market dynamics: General equilibrium analysis of the china trade shock. L Caliendo, M Dvorkin, F Parro. Econometrica 87 (3), 741-835, 2019. DOI: 10.3982/ECTA13758
