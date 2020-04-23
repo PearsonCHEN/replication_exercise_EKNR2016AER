@@ -12,4 +12,4 @@ Hat algebra transforms the traditional dynamic economic system to that of repres
 
 # Reference
 Eaton, Jonathan, Samuel Kortum, Brent Neiman, and John Romalis, "Trade and the Global Recession." American Economic Review, 106 (11): 3401-38, 2016. DOI: 10.1257/aer.20101557  
-Caliendo, Lorenze, Maximiliano Dvorkin, and Fernando Parro, "Trade and labor market dynamics: General equilibrium analysis of the china trade shock."  Econometrica, 87 (3), 741-835, 2019. DOI: 10.3982/ECTA13758
+Caliendo, Lorenzo, Maximiliano Dvorkin, and Fernando Parro, "Trade and labor market dynamics: General equilibrium analysis of the china trade shock."  Econometrica, 87 (3), 741-835, 2019. DOI: 10.3982/ECTA13758
