@@ -1,11 +1,13 @@
 ## Author:  Pearson
 ## Date: April 2020
-## Purpose: replicate results in EKNR(2016,AER) simple 2 cities case
 ## Julia version: 1.3.1
-using Pkg
+## Purpose: Solve EKNR(2016) Simple 2 Cities Case
+
+# Precompile Packages
 using Parameters
 using MATLAB
 using NLsolve
+using Plots
 
 # Introduce Functions
 include("Simple_2Cty_Functions.jl")
@@ -40,13 +42,13 @@ Aᴰ_tail = Aᴰ_data[:,T_data]*ones(1,T_tail)
 ϕ_tail = ϕ_data[:,T_data]*ones(1,T_tail)
 L_tail = L_data[:,T_data]*ones(1,T_tail)
 dₙᵢ = repeat(dₙᵢ_data[:,:,T_data],1,1,T)
-
 χ = [χ_data χ_tail]
 Aᴰ = [Aᴰ_data Aᴰ_tail]
 ϕ = [ϕ_data ϕ_tail]
 L = [L_data L_tail]
 dₙᵢ[:,:,1:T_data] = dₙᵢ_data
 
+# Hypothetical Data on Shocks in Change Form
 χ̂ = [χ[:,2:end]./χ[:,1:end-1] ones(eltype(χ),size(χ[:,end]))]
 Âᴰ = [Aᴰ[:,2:end]./Aᴰ[:,1:end-1] ones(eltype(Aᴰ),size(Aᴰ[:,end]))]
 ϕ̂ = [ϕ[:,2:end]./ϕ[:,1:end-1] ones(eltype(ϕ),size(ϕ[:,end]))]
@@ -67,6 +69,8 @@ exos_ss = myexos_ss()
 params_ss = myparams_ss()
 
 # Solve for Steady State
+println("\n\nStart to solve the steady state.")
+println("Run time and memory cost:")
 @time results_ss = nlsolve(
     (res_ss, guess_ss) -> Fun_2Cty_SS!(res_ss, guess_ss, exos_ss, params_ss),
     guess_ss,
@@ -78,7 +82,7 @@ params_ss = myparams_ss()
 
 # Check Convergence
 converged(results_ss) || error("Failed to converge in $(results_ss.iterations) iterations.")
-println("Successfully solved steady state.")
+println("Successfully solved steady state.\n")
 
 # Catch Solutions for Steady State
 res_ss = similar(results_ss.zero)
@@ -101,6 +105,8 @@ exos_lev = myexos_lev()
 params_lev = myparams_lev()
 
 # Solve the Problem in Levels
+println("Start to solve the problem in levels.")
+println("Run time and memory cost:")
 @time results_lev =
     try
         results_lev = nlsolve(
@@ -120,7 +126,7 @@ params_lev = myparams_lev()
 
 # Check Convergence
 converged(results_lev) || error("Failed to converge in $(results_lev.iterations) iterations.")
-println("Successfully solved the problem in levels.")
+println("Successfully solved the problem in levels.\n")
 
 # Catch Solutions
 res_lev = similar(results_lev.zero)
@@ -142,6 +148,8 @@ exos_hat = myexos_hat()
 params_hat = myparams_hat()
 
 # Solve the Problem in Changes
+println("Start to solve the problem in changes.")
+println("Run time and memory cost:")
 @time results_hat =
     try
         results_hat = nlsolve(
@@ -161,7 +169,7 @@ params_hat = myparams_hat()
 
 # Check Convergence
 converged(results_hat) || error("Failed to converge in $(results_hat.iterations) iterations.")
-println("Successfully solved the problem in changes.")
+println("Successfully solved the problem in changes.\n")
 
 # Catch Solutions
 res_hat = similar(results_hat.zero)
@@ -179,7 +187,7 @@ end
 ###########################################################################################
 #                                      Plot Figures
 ###########################################################################################
-using Plots
+println("Plotting the figure.")
 l = @layout [a b; c d]
 p1 = Plots.plot(K_lev[1,1:80], line=(:solid, 2), label="Level Solution");
     Plots.plot!(K_hat[1,1:80], line=(:dash, 2), label="Change Solution");
@@ -192,3 +200,4 @@ p4 = Plots.plot(Y_lev[2,1:80], line=(:solid, 2), label="Level Solution");
 figures_all = plot(p1, p2, p3, p4, layout = l)
 display(figures_all)
 savefig(figures_all, "EKNR_2Cty.pdf")
+println("The figure is saved.")
