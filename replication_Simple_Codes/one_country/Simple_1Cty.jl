@@ -1,30 +1,16 @@
 ## Author:  Pearson
+## Date: April 2020
 ## Julia version: 1.3.1
 ## Purpose: Solve EKNR(2016) Simple 1 City Case
-using Pkg
+
+# Precompile Packages
 using Parameters
-
-# Version Control
-include("Simple_1Cty_Functions.jl")
-
-for package in ["MATLAB", "NLsolve"]
-  if Pkgcheck()[package]==nothing
-    Pkg.add(package)
-  end
-end
-
-#Pin packages to version used in the paper
-if Pkgcheck()["MATLAB"]!=v"0.7.3"
-    Pkg.pin(PackageSpec(name="MATLAB", version="0.7.3"))
-end
-
-if Pkgcheck()["NLsolve"]!=v"1.0.1"
-    Pkg.pin(PackageSpec(name="NLsolve", version="4.3.0"))
-end
-
-#Compile packages
 using MATLAB
 using NLsolve
+using Plots
+
+# Introduce Functions
+include("Simple_1Cty_Functions.jl")
 
 # Program Parameters
 T_data = 20
@@ -32,7 +18,7 @@ T_tail = 500
 T = T_data+T_tail
 
 # Initial Conditions and Time Invariant Parameters
-K_init_rel_SS = 1/2
+K_init_rel_SS = rand(1)[1]
 βᴸ = 2/3
 βᴷ = 1-βᴸ
 δ = 0.1
@@ -53,106 +39,120 @@ L_tail = L_data[T_data]*ones(T_tail,1)
 Aᴰ = [Aᴰ_data'; Aᴰ_tail]
 L = [L_data'; L_tail]
 
-# Steady State Values (FROM ANALYTICAL SOLUTION)
-Kₛₛ = L[T]*βᴷ/βᴸ*(ρ*χ[T]*Aᴰ[T]/(1-ρ*(1-δ)))^(1/βᴸ)
-Yₛₛ = (1-ρ*(1-δ))/(1-ρ*(1-δ)-δ*ρ*βᴷ)
-
-#=
-    Solve for Solution to Problem in Levels
-=#
-
-# Initial Conditions and Guess
-K₁ = Kₛₛ*K_init_rel_SS
-lev_guess = ones(T,1)*Yₛₛ
-
-# Wrap All Exogenous Variables and Parameters
-myexos_1Cty_lev = @with_kw (χ = χ, Aᴰ = Aᴰ, L = L, K₁ = K₁, Kₛₛ = Kₛₛ)
-myparams_1Cty_lev = @with_kw (βᴷ = βᴷ, βᴸ = βᴸ, δ = δ, ρ = ρ, B = B, T = T)
-exos_1Cty_lev = myexos_1Cty_lev()
-params_1Cty_lev = myparams_1Cty_lev()
-
-# Solve for the Problem in levels
-@time results_lev = nlsolve(
-    (err, lev_guess) -> Fun_1Cty_Levels!(err, lev_guess, exos_1Cty_lev, params_1Cty_lev),
-    lev_guess,
-    ftol=1e-6,
-    autodiff=:forward,
-    method=:newton,
-    show_trace=true,
-)
-
-# Check Convergence
-converged(results_lev) || error("Failed to converge in $(results_lev.iterations) iterations")
-println("Successfully solved problem in levels.")
-
-# Catch Solutions
-Y_levsolution = results_lev.zero
-err = similar(Y_levsolution)
-residual_lev, K_levsolution = Fun_1Cty_Levels!(
-    err,
-    results_lev.zero,
-    exos_1Cty_lev,
-    params_1Cty_lev,
-)
-
 # Hypothetical Data on Shocks in Change Form
 χ̂ = [χ[2:T]./χ[1:T-1]; 1]
 Âᴰ = [Aᴰ[2:T]./Aᴰ[1:T-1]; 1]
 L̂ = [L[2:T]./L[1:T-1]; 1]
 
-#=
-    Solve for Solution to Problem in changes
-=#
+# Steady State Values (FROM ANALYTICAL SOLUTION)
+Kₛₛ = L[T]*βᴷ/βᴸ*(ρ*χ[T]*Aᴰ[T]/(1-ρ*(1-δ)))^(1/βᴸ)
+Yₛₛ = (1-ρ*(1-δ))/(1-ρ*(1-δ)-δ*ρ*βᴷ)
+
+###########################################################################################
+#                         Solve for Solution to the Problem in Levels
+###########################################################################################
+# Initial Conditions and Guess
+K₁ = Kₛₛ*K_init_rel_SS
+guess_lev = ones(eltype(Yₛₛ),T,1).*Yₛₛ
 
 # Wrap All Exogenous Variables and Parameters
-myexos_1Cty_hat = @with_kw (χ̂ = χ̂, Âᴰ = Âᴰ, L̂ = L̂, Y₁ = Y_levsolution[1])
-myparams_1Cty_hat = @with_kw (βᴷ = βᴷ, βᴸ = βᴸ, δ = δ, ρ = ρ, B = B, T = T)
-exos_1Cty_hat = myexos_1Cty_hat()
-params_1Cty_hat = myparams_1Cty_hat()
+myinit_lev = @with_kw (K₁ = K₁,)
+myexos_lev = @with_kw (χ = χ, Aᴰ = Aᴰ, L = L, K₁ = K₁, Kₛₛ = Kₛₛ)
+myparams_lev = @with_kw (βᴷ = βᴷ, βᴸ = βᴸ, δ = δ, ρ = ρ, B = B, T = T)
+init_lev = myinit_lev()
+exos_lev = myexos_lev()
+params_lev = myparams_lev()
+
+# Solve for the Problem in levels
+println("\n\nStart to solve the problem in levels.")
+println("Run time and memory cost:")
+@time results_lev =
+    try
+        results_lev = nlsolve(
+        (res_lev, guess_lev) -> Fun_1Cty_Levels!(res_lev,
+            guess_lev, init_lev, exos_lev, params_lev),
+        guess_lev,
+        ftol=1e-6,
+        autodiff=:forward,
+        method=:newton,
+        show_trace=false,
+    )
+    catch err
+        if isa(err, DomainError)
+            error("Failed to solve the problem in levels, please try again.")
+        end
+    end
+
+# Check Convergence
+converged(results_lev) || error("Failed to converge in $(results_lev.iterations) iterations")
+println("Successfully solved problem in levels.\n")
+
+# Catch Solutions
+res_lev = similar(results_lev.zero)
+res_lev, K_lev, Y_lev = Fun_1Cty_Levels!(
+    res_lev, results_lev.zero, init_lev, exos_lev, params_lev)
+
+###########################################################################################
+#                         Solve for Solution to the Problem in Changes
+###########################################################################################
+# Guess
+guess_hat = ones(T,1)
+
+# Wrap All Exogenous Variables and Parameters
+myinit_hat = @with_kw (Y₁ = Y_lev[1],)
+myexos_hat = @with_kw (χ̂ = χ̂, Âᴰ = Âᴰ, L̂ = L̂)
+myparams_hat = @with_kw (βᴷ = βᴷ, βᴸ = βᴸ, δ = δ, ρ = ρ, B = B, T = T)
+init_hat = myinit_hat()
+exos_hat = myexos_hat()
+params_hat = myparams_hat()
 
 # Solve for Solution to Problem in Changes
-hat_guess = ones(T,1)
-@time results_hat = nlsolve(
-    (err, hat_guess) -> Fun_1Cty_Changes!(err, hat_guess, exos_1Cty_hat, params_1Cty_hat),
-    hat_guess,
-    ftol=1e-6,
-    autodiff=:forward,
-    method=:newton,
-    show_trace=true,
-)
+println("Start to solve the problem in changes.")
+println("Run time and memory cost:")
+@time results_hat =
+    try
+        results_hat = nlsolve(
+            (res_hat, guess_hat) -> Fun_1Cty_Changes!(
+                res_hat, guess_hat, init_hat, exos_hat, params_hat),
+        guess_hat,
+        ftol=1e-6,
+        autodiff=:forward,
+        method=:newton,
+        show_trace=false,
+    )
+    catch err
+        if isa(err, DomainError)
+            error("Failed to solve the problem in levels, please try again.")
+        end
+    end
 
 # Check Convergence
 converged(results_hat) || error("Failed to converge in $(results_hat.iterations) iterations")
-println("Successfully solved problem in changes.")
+println("Successfully solved problem in changes.\n")
 
 # Catch Solutions
-err = similar(results_hat.zero)
-residual_hat, hat_solutions = Fun_1Cty_Changes!(
-    err,
-    results_hat.zero,
-    exos_1Cty_hat,
-    params_1Cty_hat,
-)
-K_hatsolution = hat_solutions[1:T,1]
-Y_hatsolution = hat_solutions[1:T,2]
-
-#=
-    Plot Figures
-=#
-K_hatsolution_lev = similar(K_hatsolution)
-Y_hatsolution_lev = similar(Y_hatsolution)
-K_hatsolution_lev[1] = K₁
-Y_hatsolution_lev[1] = Y_levsolution[1]
-
+res_hat = similar(results_hat.zero)
+res_hat, K̂, Ŷ = Fun_1Cty_Changes!(
+    res_hat, results_hat.zero, init_hat, exos_hat, params_hat)
+K_hat = similar(K̂)
+Y_hat = similar(Ŷ)
+K_hat[1] = K₁
+Y_hat[1] = Y_lev[1]
 for tt in 2:T
-    K_hatsolution_lev[tt] = K_hatsolution_lev[tt-1]*K_hatsolution[tt-1]
-    Y_hatsolution_lev[tt] = Y_hatsolution_lev[tt-1]*Y_hatsolution[tt-1]
+    K_hat[tt] = K_hat[tt-1]*K̂[tt-1]
+    Y_hat[tt] = Y_hat[tt-1]*Ŷ[tt-1]
 end
 
-using Plots
+###########################################################################################
+#                                      Plot Figures
+###########################################################################################
+println("Plotting the figure.")
 l = @layout [a; b]
-p1 = Plots.plot(K_levsolution[1:75], line=(:solid, 2));
-    Plots.plot!(K_hatsolution_lev[1:75], line=(:dash, 2))
-p2 = Plots.plot(Y_levsolution[1:75], line=(:solid, 2));
-    Plots.plot!(Y_hatsolution_lev[1:75], line=(:dash, 2))
-plot(p1, p2, layout = l)
+p1 = Plots.plot(K_lev[1:75], line=(:solid, 2), label="Level Solution");
+    Plots.plot!(K_hat[1:75], line=(:dash, 2), label="Change Solution")
+p2 = Plots.plot(Y_lev[1:75], line=(:solid, 2), label="Level Solution");
+    Plots.plot!(Y_hat[1:75], line=(:dash, 2), label="Change Solution")
+figures_all = plot(p1, p2, layout = l)
+display(figures_all)
+savefig(figures_all, "EKNR_1Cty.pdf")
+println("The figure is saved.")
