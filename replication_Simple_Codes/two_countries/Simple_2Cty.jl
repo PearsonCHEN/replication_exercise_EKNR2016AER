@@ -199,5 +199,5 @@ p4 = Plots.plot(Y_lev[2,1:80], line=(:solid, 2), label="Level Solution");
     Plots.plot!(Y_hat[2,1:80], line=(:dash, 2), label="Change Solution");
 figures_all = plot(p1, p2, p3, p4, layout = l)
 display(figures_all)
-savefig(figures_all, "EKNR_2Cty.pdf")
+savefig(figures_all, joinpath(@__DIR__, "EKNR_2Cty.pdf"))
 println("The figure is saved.")
