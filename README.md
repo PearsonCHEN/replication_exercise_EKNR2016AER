@@ -1,4 +1,4 @@
-# Replication_exercise_EKNR2016AER
+# Replication Exercise for Eaton et al.(2016, AER)
 This project is a replication exercise for the seminal work about "hat algebra"(Eaton et al., 2016).
 
 # Purpose
