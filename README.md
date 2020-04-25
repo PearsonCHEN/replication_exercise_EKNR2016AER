@@ -2,7 +2,7 @@
 This project is a replication exercise for the seminal work about "hat algebra"(Eaton et al., 2016).
 
 # Purpose
-The authors of the original paper have already offered replication files in AEA(American Economic Association, see https://www.aeaweb.org/articles?id=10.1257/aer.20101557). However, their analysis is based on Stata and MATLAB. The primary goal of this replication exercise is to learn both the programming language "Julia" and "hat algebra" method in solving economic dynamic transition.
+The authors of the [original paper](https://www.aeaweb.org/articles?id=10.1257/aer.20101557) have already offered replication files in AEA(American Economic Association). However, their analysis is based on Stata and MATLAB. The primary goal of this replication exercise is to learn both the programming language "Julia" and "hat algebra" method in solving economic dynamic transition.
 
 # Julia
 Julia is an outstanding young programming language for scientific computation. Julia offers excellent features in type management and generic programming(See JuliaDocumentation and QuantEcon).
