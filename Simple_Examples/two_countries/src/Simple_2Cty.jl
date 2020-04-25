@@ -18,7 +18,7 @@ T_tail = 250
 T = T_data+T_tail
 
 # Initial Conditions and Time Invariant Parameters
-K_init_rel_SS=rand(2,1)
+K_init_rel_SS=[1/2 1/2]'
 α = 0.55
 βᴸ = 2/3
 βᴷ = 1-βᴸ
@@ -29,7 +29,7 @@ K_init_rel_SS=rand(2,1)
 B = βᴸ^-βᴸ*βᴷ^-βᴷ
 
 # Read data
-fname = MatFile(joinpath(@__DIR__,"EKNR_Simple_2Cty_Shocks.mat"))
+fname = MatFile(joinpath(@__DIR__, "..", "input", "EKNR_Simple_2Cty_Shocks.mat"))
 χ_data = get_variable(fname,"chi_data")
 Aᴰ_data = get_variable(fname,"AD_data")
 ϕ_data = get_variable(fname,"phi_data")
@@ -199,5 +199,5 @@ p4 = Plots.plot(Y_lev[2,1:80], line=(:solid, 2), label="Level Solution");
     Plots.plot!(Y_hat[2,1:80], line=(:dash, 2), label="Change Solution");
 figures_all = plot(p1, p2, p3, p4, layout = l)
 display(figures_all)
-savefig(figures_all, joinpath(@__DIR__, "EKNR_2Cty.pdf"))
+savefig(figures_all, joinpath(@__DIR__, "..", "output", "EKNR_2Cty.pdf"))
 println("The figure is saved.")
