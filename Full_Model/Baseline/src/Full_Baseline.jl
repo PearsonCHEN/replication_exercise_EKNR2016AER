@@ -5,6 +5,11 @@
 
 # Precompile Packages
 using Parameters
-using MATLAB
+using CSV
 using NLsolve
-using Plots
+#using Plots
+
+Data = CSV.read(joinpath(@__DIR__, "..", "input", "part1_21cty.csv"))
+π_data = CSV.read(joinpath(@__DIR__, "..", "input", "part2_21cty.csv"))
+Data = Data[Data.date.==211, 3:end]
+π_data = π_data[π_data.date.==211, 5:end]

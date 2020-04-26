@@ -5,7 +5,7 @@ This project is a replication exercise for the seminal work about "hat algebra"(
 The authors of the [original paper](https://www.aeaweb.org/articles?id=10.1257/aer.20101557) have already offered replication files in AEA(American Economic Association). However, their analysis is based on Stata and MATLAB. The primary goal of this replication exercise is to learn both the programming language "Julia" and "hat algebra" method in solving economic dynamic transition.
 
 # Julia
-Julia is an outstanding young programming language for scientific computation. Julia offers excellent features in type management and generic programming(See JuliaDocumentation and QuantEcon).
+Julia is an outstanding young programming language for scientific computation. Julia offers excellent features in type stability and multiple-dispatch(See JuliaDocumentation and QuantEcon).
 
 # Hat algebra
 Hat algebra transforms the traditional dynamic economic system to that of representation of flow variables and "changes". This method helps shy away from unclear definition of exogenous variables, or fundamentals(Caliendo et al., 2019) like capital, trade cost and productivity shocks etc.
