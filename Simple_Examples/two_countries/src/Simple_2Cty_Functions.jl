@@ -31,18 +31,31 @@ function Fun_2Cty_SS!(
 
     # Derive other variables in terms of guess
     Yᴰₛₛ = Yₛₛ-Yˢₛₛ
-    wₛₛ = βᴸ.*Yₛₛ./L
-    rₛₛ = βᴷ.*Yₛₛ./Kₛₛ
-    bₛₛ = wₛₛ.^βᴸ.*rₛₛ.^βᴷ
-    pᴰₛₛ[:] = ((bₛₛ[1].*dₙᵢ[:,1]./Aᴰ[1]).^-θ+(bₛₛ[2].*dₙᵢ[:,2]./Aᴰ[2]).^-θ).^(-1/θ)
-    πₙᵢₛₛ[:,1] = (bₛₛ[1].*dₙᵢ[:,1]./pᴰₛₛ[:]./Aᴰ[1]).^-θ
-    πₙᵢₛₛ[:,2] = (bₛₛ[2].*dₙᵢ[:,2]./pᴰₛₛ[:]./Aᴰ[2]).^-θ
+    for n = 1:size(guess_ss,1)
+        wₛₛ[n] = βᴸ*Yₛₛ[n]/L[n]
+        rₛₛ[n] = βᴷ*Yₛₛ[n]/Kₛₛ[n]
+        bₛₛ[n] = wₛₛ[n]^βᴸ*rₛₛ[n]^βᴷ
+    end
+
+    for n = 1:size(guess_ss,1)
+        pᴰₛₛ[n] = ((bₛₛ[1]*dₙᵢ[n,1]/Aᴰ[1])^-θ+(bₛₛ[2]*dₙᵢ[n,2]/Aᴰ[2])^-θ)^(-1/θ)
+        for i = 1:size(guess_ss,1)
+            πₙᵢₛₛ[n,i] = (bₛₛ[i]*dₙᵢ[n,i]/pᴰₛₛ[n]/Aᴰ[i])^-θ
+        end
+    end
+
     Xᴰₛₛ = πₙᵢₛₛ'\Yᴰₛₛ
 
     # Equations
-    res_ss[1:2] = abs.(Xᴰₛₛ./pᴰₛₛ./Kₛₛ./(δ./χ).^(1/α).-1)' # capital accumulation
-    res_ss[3:4] = abs.((1-ρ*(1-δ))*pᴰₛₛ./ρ./χ./(Xᴰₛₛ./pᴰₛₛ./Kₛₛ).^α./pᴰₛₛ./((1-α).+
-        α*βᴷ.*Yₛₛ./Xᴰₛₛ).-1)' # euler equation
+    nf = 0
+    for n = 1:size(guess_ss,1)
+        res_ss[nf+1] = abs(Xᴰₛₛ[n]/pᴰₛₛ[n]/Kₛₛ[n]/(δ/χ[n])^(1/α)-1) # capital accumulation
+        nf += 1
+        res_ss[nf+1] = abs((1-ρ*(1-δ))*pᴰₛₛ[n]/ρ/χ[n]/(Xᴰₛₛ[n]/pᴰₛₛ[n]/Kₛₛ[n])^α/pᴰₛₛ[n]/((1-α)+
+            α*βᴷ*Yₛₛ[n]/Xᴰₛₛ[n])-1) # euler equation
+        nf += 1
+    end
+
     return res_ss, Yₛₛ, Kₛₛ
 end
 
@@ -78,32 +91,52 @@ function Fun_2Cty_Levels!(
     # Equations and other variables
     Yᴰ = Y-Yˢ
     K[:,1] = K₁
-    w[:,1] = βᴸ.*Y[:,1]./L[:,1]
-    r[:,1] = βᴷ.*Y[:,1]./K[:,1]
-    b[:,1] = w[:,1].^βᴸ.*r[:,1].^βᴷ
-    pᴰ[:,1] = ((b[1,1].*dₙᵢ[:,1,1]./Aᴰ[1,1]).^-θ.+(b[2,1].*dₙᵢ[:,2,1]./Aᴰ[2,1]).^-θ).^
-        (-1/θ)
-    πₙᵢ[:,1,1] = (b[1,1].*dₙᵢ[:,1,1]./pᴰ[:,1]./Aᴰ[1,1]).^-θ
-    πₙᵢ[:,2,1] = (b[2,1].*dₙᵢ[:,2,1]./pᴰ[:,1]./Aᴰ[2,1]).^-θ
-    Xᴰ[:,1] = (πₙᵢ[:,:,1]')\Yᴰ[:,1]
-    for tt = 2:T
-        K[:,tt] = χ[:,tt-1].*(Xᴰ[:,tt-1]./pᴰ[:,tt-1]).^α.*K[:,tt-1].^(1-α).+(1-δ).*K[:,tt-1]
-        w[:,tt] = βᴸ.*Y[:,tt]./L[:,tt]
-        r[:,tt] = βᴷ.*Y[:,tt]./K[:,tt]
-        b[:,tt] = w[:,tt].^βᴸ.*r[:,tt].^βᴷ
-        pᴰ[:,tt] = ((b[1,tt].*dₙᵢ[:,1,tt]./Aᴰ[1,tt]).^-θ.+
-            (b[2,tt].*dₙᵢ[:,2,tt]./Aᴰ[2,tt]).^-θ).^(-1/θ)
-        πₙᵢ[:,1,tt] = (b[1,tt].*dₙᵢ[:,1,tt]./pᴰ[:,tt]./Aᴰ[1,tt]).^-θ
-        πₙᵢ[:,2,tt] = (b[2,tt].*dₙᵢ[:,2,tt]./pᴰ[:,tt]./Aᴰ[2,tt]).^-θ
-        Xᴰ[:,tt] = (πₙᵢ[:,:,tt]')\Yᴰ[:,tt]
-        res_lev[:,tt-1] = abs.(
-            (pᴰ[:,tt-1]./ρ./χ[:,tt-1].*(Xᴰ[:,tt-1]./pᴰ[:,tt-1]./K[:,tt-1]).^(1-α))./
-            (pᴰ[:,tt]./χ[:,tt].*(Xᴰ[:,tt]./pᴰ[:,tt]./K[:,tt]).^(1-α).*
-            (χ[:,tt].*(1-α).*(Xᴰ[:,tt]./pᴰ[:,tt]./K[:,tt]).^α.+(1-δ))+α.*r[:,tt]).-1
-        ) # euler equations(T-1)
+
+    for n = 1:size(guess_lev,1)
+        w[n,1] = βᴸ*Y[n,1]/L[n,1]
+        r[n,1] = βᴷ*Y[n,1]/K[n,1]
+        b[n,1] = w[n,1]^βᴸ*r[n,1]^βᴷ
     end
-    res_lev[:,T] = abs.((χ[:,T].*(Xᴰ[:,T]./pᴰ[:,T]).^α.*K[:,T].^(1-α)+(1-δ).*K[:,T])./
-        Kₛₛ[:].-1) # terminal condition(1)
+
+    for n = 1:size(guess_lev,1)
+        pᴰ[n,1] = ((b[1,1]*dₙᵢ[n,1,1]/Aᴰ[1,1])^-θ+(b[2,1]*dₙᵢ[n,2,1]/Aᴰ[2,1])^-θ)^(-1/θ)
+        for i = 1:size(guess_lev,1)
+            πₙᵢ[n,i,1] = (b[i,1]*dₙᵢ[n,i,1]/pᴰ[n,1]/Aᴰ[i,1])^-θ
+        end
+    end
+
+    Xᴰ[:,1] = (πₙᵢ[:,:,1]')\Yᴰ[:,1]
+
+    for tt = 2:T
+        for n = 1:size(guess_lev,1)
+            K[n,tt] = χ[n,tt-1]*(Xᴰ[n,tt-1]/pᴰ[n,tt-1])^α*K[n,tt-1]^(1-α)+(1-δ)*K[n,tt-1]
+            w[n,tt] = βᴸ*Y[n,tt]/L[n,tt]
+            r[n,tt] = βᴷ*Y[n,tt]/K[n,tt]
+            b[n,tt] = w[n,tt]^βᴸ*r[n,tt]^βᴷ
+        end
+
+        for n = 1:size(guess_lev,1)
+            pᴰ[n,tt] = ((b[1,tt]*dₙᵢ[n,1,tt]/Aᴰ[1,tt])^-θ+(b[2,tt]*dₙᵢ[n,2,tt]/Aᴰ[2,tt])^-θ)^(-1/θ)
+            for i = 1:size(guess_lev,1)
+                πₙᵢ[n,i,tt] = (b[i,tt]*dₙᵢ[n,i,tt]/pᴰ[n,tt]/Aᴰ[i,tt])^-θ
+            end
+        end
+
+        Xᴰ[:,tt] = (πₙᵢ[:,:,tt]')\Yᴰ[:,tt]
+
+        for n = 1:size(guess_lev,1)
+            res_lev[n,tt-1] = abs(
+                (pᴰ[n,tt-1]/ρ/χ[n,tt-1]*(Xᴰ[n,tt-1]/pᴰ[n,tt-1]/K[n,tt-1])^(1-α))/
+                (pᴰ[n,tt]/χ[n,tt]*(Xᴰ[n,tt]/pᴰ[n,tt]/K[n,tt])^(1-α)*
+                (χ[n,tt]*(1-α)*(Xᴰ[n,tt]/pᴰ[n,tt]/K[n,tt])^α+(1-δ))+α*r[n,tt])-1
+            ) # euler equations(T-1)
+        end
+    end
+
+    for n = 1:size(guess_lev,1)
+        res_lev[n,T] = abs((χ[n,T]*(Xᴰ[n,T]/pᴰ[n,T])^α*K[n,T]^(1-α)+(1-δ)*K[n,T])/Kₛₛ[n]-1) # terminal condition(1)
+    end
+
     return res_lev, K, Y, Yᴰ, Xᴰ, πₙᵢ
 end
 
@@ -145,35 +178,49 @@ function Fun_2Cty_Changes!(
     πₙᵢ[:,:,1] = πₙᵢ₁
     Xᴰ[:,1] = (πₙᵢ[:,:,1]')\Yᴰ[:,1]
     Yˢ[:,1] = Y[:,1]-Yᴰ[:,1]
-    for ts = 2:T
-        Yˢ[:,ts] = Yˢ[:,ts-1].*ϕ̂[:,ts-1]
+    for n = 1:1:size(guess_hat,1)
+        for ts = 2:T
+            Yˢ[n,ts] = Yˢ[n,ts-1].*ϕ̂[n,ts-1]
+        end
     end
 
     # Equations and other variables
     for tt = 2:T
+        for n = 1:1:size(guess_hat,1)
         # other variables and equations
-        ŵ[:,tt-1] = Ŷ[:,tt-1]./L̂[:,tt-1]
-        r̂[:,tt-1] = Ŷ[:,tt-1]./K̂[:,tt-1]
-        b̂[:,tt-1] = ŵ[:,tt-1].^βᴸ.*r̂[:,tt-1].^βᴷ
-        p̂ᴰ[:,tt-1] = (πₙᵢ[:,1,tt-1].*(b̂[1,tt-1].*d̂ₙᵢ[:,1,tt-1]./Âᴰ[1,tt-1]).^-θ.+
-            πₙᵢ[:,2,tt-1].*(b̂[2,tt-1].*d̂ₙᵢ[:,2,tt-1]./Âᴰ[2,tt-1]).^-θ).^(-1/θ)
-        π̂ₙᵢ[:,1,tt-1] = (b̂[1,tt-1].*d̂ₙᵢ[:,1,tt-1]./p̂ᴰ[:,tt-1]./Âᴰ[1,tt-1]).^-θ
-        π̂ₙᵢ[:,2,tt-1] = (b̂[2,tt-1].*d̂ₙᵢ[:,2,tt-1]./p̂ᴰ[:,tt-1]./Âᴰ[2,tt-1]).^-θ
+            ŵ[n,tt-1] = Ŷ[n,tt-1]/L̂[n,tt-1]
+            r̂[n,tt-1] = Ŷ[n,tt-1]/K̂[n,tt-1]
+            b̂[n,tt-1] = ŵ[n,tt-1]^βᴸ*r̂[n,tt-1]^βᴷ
+        end
 
-        # update intertemporal variables
-        πₙᵢ[:,:,tt] = π̂ₙᵢ[:,:,tt-1].*πₙᵢ[:,:,tt-1]
-        Y[:,tt] = Ŷ[:,tt-1].*Y[:,tt-1]
-        Yᴰ[:,tt] = Y[:,tt]-Yˢ[:,tt]
+        for n = 1:1:size(guess_hat,1)
+            p̂ᴰ[n,tt-1] = (πₙᵢ[n,1,tt-1]*(b̂[1,tt-1]*d̂ₙᵢ[n,1,tt-1]/Âᴰ[1,tt-1])^-θ+
+                πₙᵢ[n,2,tt-1]*(b̂[2,tt-1]*d̂ₙᵢ[n,2,tt-1]/Âᴰ[2,tt-1])^-θ)^(-1/θ)
+        end
+
+        for n = 1:1:size(guess_hat,1)
+            for i = 1:1:size(guess_hat,1)
+                π̂ₙᵢ[n,i,tt-1] = (b̂[i,tt-1]*d̂ₙᵢ[n,i,tt-1]/p̂ᴰ[n,tt-1]/Âᴰ[i,tt-1])^-θ
+                πₙᵢ[n,i,tt] = π̂ₙᵢ[n,i,tt-1]*πₙᵢ[n,i,tt-1]
+            end
+            Y[n,tt] = Ŷ[n,tt-1]*Y[n,tt-1]
+            Yᴰ[n,tt] = Y[n,tt]-Yˢ[n,tt]
+        end
+
         Xᴰ[:,tt] = (πₙᵢ[:,:,tt]')\(Yᴰ[:,tt])
-        X̂ᴰ[:,tt-1] = Xᴰ[:,tt]./Xᴰ[:,tt-1]
-        K̂[:,tt] = χ̂[:,tt-1].*(X̂ᴰ[:,tt-1]./p̂ᴰ[:,tt-1]./K̂[:,tt-1]).^α.*(K̂[:,tt-1].-(1-δ)).+(1-δ)
 
-        # euler equations
-        res_hat[:,tt-1] = K̂[:,tt-1]./(K̂[:,tt-1].-(1-δ))./ρ./(X̂ᴰ[:,tt-1].*((1-α).+(1-δ).*
-            (K̂[:,tt-1].*p̂ᴰ[:,tt-1]./X̂ᴰ[:,tt-1]).^α./χ̂[:,tt-1]./(K̂[:,tt-1].-(1-δ))).+
-            α*βᴷ.*Y[:,tt]./Xᴰ[:,tt-1]).-1
-            # euler equations(T-1)
+        for n = 1:1:size(guess_hat,1)
+            X̂ᴰ[n,tt-1] = Xᴰ[n,tt]/Xᴰ[n,tt-1]
+            K̂[n,tt] = χ̂[n,tt-1]*(X̂ᴰ[n,tt-1]/p̂ᴰ[n,tt-1]/K̂[n,tt-1])^α*(K̂[n,tt-1]-(1-δ))+(1-δ)
+            res_hat[n,tt-1] = K̂[n,tt-1]/(K̂[n,tt-1]-(1-δ))/ρ/(X̂ᴰ[n,tt-1]*((1-α)+(1-δ)*
+            (K̂[n,tt-1]*p̂ᴰ[n,tt-1]/X̂ᴰ[n,tt-1])^α/χ̂[n,tt-1]/(K̂[n,tt-1]-(1-δ)))+
+            α*βᴷ*Y[n,tt]/Xᴰ[n,tt-1])-1 # euler equations(T-1)
+        end
     end
-    res_hat[:,T] = abs.(K̂[:,T]./1 .-1) # terminal condition(1)
+
+    for n = 1:1:size(guess_hat,1)
+        res_hat[n,T] = abs(K̂[n,T]/1-1) # terminal condition(1)
+    end
+
     return res_hat, K̂, Ŷ, Ŷᴰ, X̂ᴰ, π̂ₙᵢ
 end
