@@ -186,3 +186,48 @@ function static_problem!(
 
     return res_static, Ŷ, Π
 end
+
+#=
+    Subroutine 3
+    - This function solves the whole dynamic problem.
+    - Note that this function calls subroutine 2 multiple times, which calls subroutine 1
+    multiple times.
+=#
+function dynamic_problem!(
+    res_dynamic::AbstractArray,
+    guess_dynamic::AbstractArray, # K̂[1:NC,1:NK,1] and Ŷ[1:NC,1:NS,1:T-1]
+    exos_dynamic::NamedTuple,
+    params_dynamic::NamedTuple,
+    )
+    # Unpack exogenous variables and parameters
+    @unpack  = exos_dynamic
+    @unpack  = params_dynamic
+
+    # Pre-allocate memory
+
+    # Step 1
+    # Calls subroutine 2
+
+    # Step 2
+    # Solve for X̂ᶠ[:,1]
+
+    # Step 3
+    # Form Π[:,:,2]
+
+    # Step 4
+    # Solve for X̂ᶠ[:,2]
+
+    # Step 5
+    # Use results in step 2 & 4 to evaluate Euler equation
+
+    # Step 6
+    # Update K̂ᵏₜ₊₁
+
+    # Step 7
+    # Iterate from t -> T-1
+
+    # Step 8
+    # Evaluate terminal conditions
+
+    return res_dynamic,
+end
