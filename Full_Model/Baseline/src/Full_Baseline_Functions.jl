@@ -68,8 +68,8 @@ function static_problem!(
     params_static::NamedTuple,
     )
     # Unpack exogenous variables and parameters
-    @unpack Ŷᴷ, Y, Xᶠ, Dᴿ, wL, L̂, rK, K̂, d̂, T̂, π,   X = exos_static
-    @unpack NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ,   β̃ᴹ, = params_static
+    @unpack Ŷᴷ, Y, Xᶠ, Dᴿ, wL, L̂, rK, K̂, d̂, T̂, π = exos_static
+    @unpack NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ = params_static
 
     # Pre-allocate memory
     Ŷ = zeros(NC,NS)
