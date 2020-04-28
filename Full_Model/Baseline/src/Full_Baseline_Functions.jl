@@ -68,14 +68,13 @@ function static_problem!(
     params_static::NamedTuple,
     )
     # Unpack exogenous variables and parameters
-    @unpack Ŷᴷ, Y, Xᶠ, Dᴿ, wL, L̂, rK, K̂, d̂, T̂, π = exos_static
+    @unpack π, Ŷᴷ, Y, Xᶠ, Dᴿ, wL, L̂, rK, K̂, d̂, T̂= exos_static
     @unpack NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ = params_static
 
     # Pre-allocate memory
     Ŷ = zeros(NC,NS)
     ŵ = zeros(NC)
     r̂ = zeros(NC,NK)
-    K̂ = zeros(NC,NK)
     guess_fixpoint = zeros(NC,NS)
     π̂ = similar(π)
     Π = similar(π)
