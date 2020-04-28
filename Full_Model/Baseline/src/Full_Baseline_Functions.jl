@@ -72,15 +72,15 @@ function static_problem!(
     @unpack NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ = params_static
 
     # Pre-allocate memory
-    Ŷ = zeros(NC,NS)
-    ŵ = zeros(NC)
-    r̂ = zeros(NC,NK)
-    guess_fixpoint = zeros(NC,NS)
-    π̂ = similar(π)
-    Π = similar(π)
-    Xˢ = zeros(NC)
-    Y′ = zeros(NC,NS)
-    RHS = zeros(NC)
+    Ŷ = zeros(NC,NS) # changes of sectoral GDP, (𝒩,Ωᵣ⋆={C,D,S})
+    ŵ = zeros(NC) # changes of labor wage, (𝒩)
+    r̂ = zeros(NC,NK) # changes of capital rental rate, (𝒩,Ωₖ={C,D})
+    guess_fixpoint = zeros(NC,NS) # goods price guess, (𝒩,Ωᵣ⋆)
+    π̂ = similar(π) # changes of trade share, (𝒩,𝒩,Ωₜ={D,S})
+    Π = similar(π) # level of trade share in the following period, (𝒩,𝒩,Ωₜ)
+    Y′ = zeros(NC,NS) # level of sectoral GDP, (𝒩,Ωᵣ⋆)
+    Xˢ = zeros(NC) # level of final demand for Semidurable(S), (𝒩)
+    RHS = zeros(NC) # Right hand side of Step 7, (𝒩)
 
     # Step 1
     # Resolve guess
