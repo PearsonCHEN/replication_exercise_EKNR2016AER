@@ -35,14 +35,14 @@ NK = 2 # Number of capital types(C and D, corresponding to sector 1 and 2)
 α = [Data.alphaC[1] Data.alphaD[1] 0.5] # Investment efficiency
 δ = [Data.deltaC[1] Data.deltaD[1]] # Depreciation rete
 θ = [2 2] # Trade elasticity for sector D and S
-β̃ᴸ = ones(NC, NS)
-β̃ᴷ = ones(NC, NS, NS-1)
+β̃ᴸ = ones(NC, NS+1)
+β̃ᴷ = ones(NC, NS+1, NS-1)
 β̃ᴹ = ones(NC, NS, NS)
-β̃ᴸ = [Data.betaTilLC Data.betaTilLD Data.betaTilLS] # Labor's income share
-β̃ᴷ_temp = [Data.betaTilKCC Data.betaTilKCD Data.betaTilKDC Data.betaTilKDD Data.betaTilKSC Data.betaTilKSD]
+β̃ᴸ = [Data.betaTilLC Data.betaTilLD Data.betaTilLS Data.betaTilLR] # Labor's income share
+β̃ᴷ_temp = [Data.betaTilKCC Data.betaTilKDC Data.betaTilKSC Data.betaTilKRC Data.betaTilKCD Data.betaTilKDD Data.betaTilKSD Data.betaTilKRD]
 β̃ᴹ_temp = [Data.betaTilICC Data.betaTilICD Data.betaTilICS Data.betaTilIDC Data.betaTilIDD Data.betaTilIDS Data.betaTilISC Data.betaTilISD Data.betaTilISS]
 for country in eachindex(β̃ᴷ_temp[:,1])
-    β̃ᴷ[country, :, :] = reshape(β̃ᴷ_temp[country, :], NS, NS-1) # Capital's income share
+    β̃ᴷ[country, :, :] = reshape(β̃ᴷ_temp[country, :], NS+1, NS-1) # Capital's income share
     β̃ᴹ[country, :, :] = reshape(β̃ᴹ_temp[country, :], NS, NS) # Intermediate's income share
 end
 
@@ -76,12 +76,12 @@ guess = ones(NC, NS, T); guess[:,:,1] = K̂[:,:,1]; guess[:,:,2:T] = Ŷ[:,:,1:T
 for country in 1:1:NC
     π[country, :, :] = Matrix(π_data[(country-1)*NC+1:country*NC, 2:4])
 end
-D = [Data.DC1 Data.DD1 Data.DS1]
-Y₀ = [Data.yC1 Data.yD1 Data.yS1]
-X₀ = [Data.xC1 Data.xD1 Data.xS1]
-Xᶠ = [Data.xFC1 Data.xFD1 Data.xFS1]
-Kλᴷ = [Data.capCinc1 Data.capDinc1]
-Lλᴸ = Data.labinc1
+D = [Data.DC1 Data.DD1 Data.DS1 Data.DR1]
+Y₀ = [Data.yC1 Data.yD1 Data.yS1 Data.yR1]
+X₀ = [Data.xC1 Data.xD1 Data.xS1 Data.xR1]
+Xᶠ = [Data.xFC1 Data.xFD1 Data.xFS1 Data.xFR1]
+rK = [Data.capCinc1 Data.capDinc1]
+wL = Data.labinc1
 
 # Config use
 show(Data[1,:], allcols=:true)
