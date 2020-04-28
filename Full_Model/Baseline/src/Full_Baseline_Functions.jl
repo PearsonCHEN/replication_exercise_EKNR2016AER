@@ -184,5 +184,5 @@ function static_problem!(
         nf += 1
     end
 
-    return res_static, Ŷ,
+    return res_static, Ŷ, Π
 end
