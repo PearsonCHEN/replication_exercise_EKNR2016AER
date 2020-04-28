@@ -11,7 +11,7 @@ function factor_price_fixpoint!(
     )
     # Unpack exogenous variables and parameters
     @unpack π, T̂, d̂, ŵ, r̂ = exos_fixpoint
-    @unpack β̃ᴸ, β̃ᴷ, β̃ᴹ, θ, = params_fixpoint
+    @unpack β̃ᴸ, β̃ᴷ, β̃ᴹ, θ, NC, NS, NK = params_fixpoint
 
     # Pre-allocate memory
     p̂ = similar(guess_fixpoint)
@@ -20,22 +20,22 @@ function factor_price_fixpoint!(
 
     # Load guess, form other variables
     p̂[:,:] = guess_fixpoint
-    for n in 1:1:size(p̂,1)
-        for l in 1:1:size(p̂,2)
+    for n in 1:NC
+        for l in 1:NS
             b̂[n,l] = ŵ[n,l]^β̃ᴸ[n,l]
-            for k in 1:1:size(r̂,3)
+            for k in 1:NK
                 b̂[n,l] *= r̂[n,l,k]^β̃ᴷ[n,l,k]
             end
-            for j in 1:1:size(p̂,2)
+            for j in 1:NS
                 b̂[n,l] *= p̂[n,j]^β̃ᴹ[n,l,j]
             end
         end
     end
 
     # Equations
-    for n in 1:1:size(p̂,1)
-        for j in 1:1:size(p̂,2)
-            for i = 1:1:size(p̂,1)
+    for n in 1:NC
+        for j in 1:NS
+            for i = 1:NC
                 p̂′[n,j] += π[n,i,j]*(b̂[i,j]*d̂[n,i,j]/T̂[i,j])^-θ
             end
             p̂′[n,j] = p̂′[n,j]^(-1/θ)

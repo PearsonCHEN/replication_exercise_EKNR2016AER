@@ -26,6 +26,7 @@ Data = Data[Data.date.==T₀, 3:end]
 ###################################################################
 NC = size(Data, 1) # Number of countries
 NS = 3 # Number of sectors
+NK = 2 # Number of capital types(C and D, corresponding to sector 1 and 2)
 
 # Preference
 ρ = Data.rho[1] # Intertemporal elasticity of substitution
