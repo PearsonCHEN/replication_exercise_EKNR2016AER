@@ -16,8 +16,8 @@ function factor_price_fixpoint!(
     )
 
     # Unpack exogenous variables and parameters
-    @unpack π, T̂, d̂, ŵ, r̂ = exos_fixpoint
-    @unpack β̃ᴸ, β̃ᴷ, β̃ᴹ, θ, NC, NS, NK = params_fixpoint
+    @unpack ŵ, r̂, π, d̂, T̂ = exos_fixpoint
+    @unpack NC, NS, NK, β̃ᴸ, β̃ᴷ, β̃ᴹ, θ = params_fixpoint
 
     # Pre-allocate memory
     p̂ = similar(guess_fixpoint)
@@ -118,11 +118,9 @@ function static_problem!(
 
     # Pack exogenous variables and parameters for solve the price
     myexos_fixpoint = @with_kw(
-
-    )
+        ŵ = ŵ, r̂ = r̂, π = π, d̂ = d̂, T̂ = T̂)
     myparams_fixpoint = @with_kw(
-
-    )
+        NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, β̃ᴹ = β̃ᴹ, θ = θ)
     exos_fixpoint = myexos_fixpoint()
     params_fixpoint = myparams_fixpoint()
 
