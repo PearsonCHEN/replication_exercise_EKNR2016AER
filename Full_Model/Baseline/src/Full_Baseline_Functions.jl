@@ -71,7 +71,7 @@ function static_problem!(
     @unpack π, Ŷᴷ, Y, Xᶠ, Dᴿ, wL, L̂, rK, K̂, d̂, T̂ = exos_static
     @unpack NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ = params_static
 
-    # Pre-allocate memory, note Ωᵣ⋆={C,D,S}, Ωₖ={C,D}
+    # Pre-allocate memory, note that Ωᵣ⋆={C,D,S}, Ωₖ={C,D}
     Ŷ = zeros(NC,NS) # changes of sectoral GDP, (𝒩,Ωᵣ⋆)
     ŵ = zeros(NC) # changes of labor wage, (𝒩)
     r̂ = zeros(NC,NK) # changes of capital rental rate, (𝒩,Ωₖ)
@@ -118,7 +118,7 @@ function static_problem!(
 
     # Pack exogenous variables and parameters for solve the price
     myexos_fixpoint = @with_kw(
-        ŵ = ŵ, r̂ = r̂, π = π, d̂ = d̂, T̂ = T̂
+        ŵ = ŵ[1:NC], r̂ = r̂[1:NC,1:NK], π = π[1:NC,1:NC,1:NS], d̂ = d̂[1:NC,1:NC,1:NS], T̂ = T̂[1:NC,1:NS]
     )
     myparams_fixpoint = @with_kw(
         NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, β̃ᴹ = β̃ᴹ, θ = θ
