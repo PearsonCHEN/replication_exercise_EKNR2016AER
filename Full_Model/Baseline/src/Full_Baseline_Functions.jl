@@ -71,8 +71,7 @@ function static_problem!(
     @unpack π, Ŷᴷ, Y, Xᶠ, Dᴿ, wL, L̂, rK, K̂, d̂, T̂ = exos_static
     @unpack NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ = params_static
 
-    # Pre-allocate memory
-    # Ωᵣ⋆={C,D,S}, Ωₖ={C,D}, Ω={C,D,S}
+    # Pre-allocate memory, note Ωᵣ⋆={C,D,S}, Ωₖ={C,D}, Ω={C,D,S}
     Ŷ = zeros(NC,NS) # changes of sectoral GDP, (𝒩,Ωᵣ⋆)
     ŵ = zeros(NC) # changes of labor wage, (𝒩)
     r̂ = zeros(NC,NK) # changes of capital rental rate, (𝒩,Ωₖ)
