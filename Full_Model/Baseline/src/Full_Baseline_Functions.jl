@@ -228,13 +228,13 @@ function dynamic_problem!(
     Ŷ[:,:,1:T-1] = guess_dynamic[:,:,2:T]
 
     # Evaluate Euler
-    for tt = 1:T-1
+    for t = 1:T-1
         # Step 1
         # Calls subroutine 2
         myexos_static = @with_kw (
-            π = π[:,:,tt], Ŷᴷ = Ŷ[:,1:NK,tt], Y = Y[:,:,tt], Xᶠ = Xᶠ[:,:,tt],
-            Dᴿ = Dᴿ[:,:,tt+1], wL = wL[:,:,tt], L̂ = L̂[:,:,tt], rK = rK[:,:,tt],
-            K̂ = K̂[:,:,tt], d̂ = d̂[:,:,tt], T̂ = T̂[:,:,tt],
+            π = π[:,:,t], Ŷᴷ = Ŷ[:,1:NK,t], Y = Y[:,:,t], Xᶠ = Xᶠ[:,:,t],
+            Dᴿ = Dᴿ[:,:,t+1], wL = wL[:,:,t], L̂ = L̂[:,:,t], rK = rK[:,:,t],
+            K̂ = K̂[:,:,t], d̂ = d̂[:,:,t], T̂ = T̂[:,:,t],
         )
         myparams_static = @with_kw (
             NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, ψ = ψ, θ = θ, β̃ᴹ = β̃ᴹ
@@ -269,17 +269,17 @@ function dynamic_problem!(
 
         # Catch Solutions
         res_static = similar(results_static.zero)
-        res_static, Ŷ[:,3,tt], Π[:,:,:,tt] = factor_price_fixpoint!(
+        res_static, Ŷ[:,3,t], Π[:,:,:,t] = factor_price_fixpoint!(
             res_static, results_static.zero, exos_static, params_static)
 
         # Step 2
-        # Solve for X̂ᶠ[:,1]
+        # Solve for X̂ᶠ[:,t]
 
         # Step 3
-        # Form Π[:,:,2]
+        # Form Π[:,:,t+1]
 
         # Step 4
-        # Solve for X̂ᶠ[:,2]
+        # Solve for X̂ᶠ[:,t+1]
 
         # Step 5
         # Use results in step 2 & 4 to evaluate Euler equation
