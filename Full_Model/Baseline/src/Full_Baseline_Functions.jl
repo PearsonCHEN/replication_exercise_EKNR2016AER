@@ -235,9 +235,17 @@ function dynamic_problem!(
         # Step 1
         # Calls subroutine 2
         myexos_static = @with_kw (
-            π = π[:,:,:,t], Ŷᴷ = Ŷ[:,1:NK,t], Y = Y[:,:,t], Xᶠ = Xᶠ[:,:,t],
-            Dᴿ = Dᴿ[:,:,t+1], wL = wL[:,:,t], L̂ = L̂[:,:,t], rK = rK[:,:,t],
-            K̂ = K̂[:,:,t], d̂ = d̂[:,:,t], T̂ = T̂[:,:,t],
+            π = π[1:NC,1:NC,1:NS-1,t],
+            Ŷᴷ = Ŷ[1:NC,1:NK,t],
+            Y = Y[1:NC,1:NS,t],
+            Xᶠ = Xᶠ[1:NC,1:NS,t],
+            Dᴿ = Dᴿ[1:NC,1:1,t+1],
+            wL = wL[1:NC,t],
+            L̂ = L̂[1:NC,t],
+            rK = rK[1:NC,1:NK,t],
+            K̂ = K̂[1:NC,1:NK,t],
+            d̂ = d̂[1:NC,1:NC,1:NS,t],
+            T̂ = T̂[1:NC,1:NS,t],
         )
         myparams_static = @with_kw (
             NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, ψ = ψ, θ = θ, β̃ᴹ = β̃ᴹ
