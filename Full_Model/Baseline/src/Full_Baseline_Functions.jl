@@ -271,8 +271,10 @@ function dynamic_problem!(
 
         # Catch Solutions
         res_static = similar(results_static.zero)
-        res_static, Ŷ[:,3,t], Π[:,:,:,t], ŵ[:,t], r̂[:,:,t], p̂[:,:,t] = factor_price_fixpoint!(
+        res_static, Ŷ[:,3,t], π[:,:,:,t+1], ŵ[:,t], r̂[:,:,t], p̂[:,:,t] = factor_price_fixpoint!(
             res_static, results_static.zero, exos_static, params_static)
+
+        # Update level variables Part I
         for n = 1:NC
             wL[n,t+1] = wL[n,t]*ŵ[n,t]*L̂[n,t]
             for j = 1:NS
@@ -296,7 +298,7 @@ function dynamic_problem!(
 
         # Step 3
         # Form Π[:,:,2,t+1] and get X[:,2,t+1]
-        X[:,2,t+1] = Π[:,:,2,t+1]'\(Y[:,2,t+1])
+        X[:,2,t+1] = π[:,:,2,t+1]'\(Y[:,2,t+1])
 
         # Step 4
         # Solve for X̂ᶠ[:,2,t]
@@ -323,7 +325,19 @@ function dynamic_problem!(
         end
 
         # Step 7
-        # Iterate from t -> T-1
+        # Iterate from t -> T-1, update level variables
+            #= Updated in Part I
+                π[:,:,t+1] = π[:,:,t].*π̂[:,:,t]
+                Y[:,:,t+1] = Y[:,:,t].*Ŷ[:,:,t]
+                wL[:,t+1] = wL[:,t].*ŵ[:,t].*L̂[:,t]
+                rK[:,:,t+1] = rK[:,:,t].*r̂[:,:,t].*K̂[:,:,t]
+            =#
+        # Update level variables Part II
+        for n = 1:NC
+            for j = 1:NS
+                Xᶠ[n,j,t+1] = Xᶠ[n,j,t].*X̂ᶠ[n,j,t]
+            end
+        end
 
     end
         # Step 8
