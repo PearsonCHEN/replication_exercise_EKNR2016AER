@@ -217,8 +217,7 @@ function dynamic_problem!(
 
     K̂ = similar(rK)
     Ŷ = similar(Y)
-
-    X̂ᶠ = similar(Y)
+    X̂ᶠ = similar(Xᶠ)
     # Resolve initial conditions
     π[:,:,1] = π₁
     Y[:,:,1] = Y₁
