@@ -186,7 +186,7 @@ function static_problem!(
         nf += 1
     end
 
-    return res_static, Ŷ, Π
+    return res_static, Ŷ, Π, ŵ, r̂, p̂
 end
 
 #=
@@ -205,7 +205,7 @@ function dynamic_problem!(
     # Unpack exogenous variables and parameters
     @unpack π₁, Y₁, Xᶠ₁, wL₁, rK₁ = init_dynamic
     @unpack Dᴿ, L̂, K̂, d̂, T̂ = exos_dynamic
-    @unpack T, NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ = params_dynamic
+    @unpack T, NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ, ρ, δ, α = params_dynamic
 
     # Pre-allocate memory
     π = zeros(NC,NC,NS-1,T)
@@ -271,13 +271,18 @@ function dynamic_problem!(
 
         # Catch Solutions
         res_static = similar(results_static.zero)
-        res_static, Ŷ[:,3,t], Π[:,:,:,t] = factor_price_fixpoint!(
+        res_static, Ŷ[:,3,t], Π[:,:,:,t], ŵ[:,t], r̂[:,:,t], p̂[:,:,t] = factor_price_fixpoint!(
             res_static, results_static.zero, exos_static, params_static)
         for n = 1:NC
+            wL[n,t+1] = wL[n,t]*ŵ[n,t]*L̂[n,t]
             for j = 1:NS
                 Y[n,j,t+1] = Y[n,j,t]*Ŷ[n,j,t]
             end
+            for k = 1:NK
+                rK[n,t+1] = rK[n,k,t]*r̂[n,k,t]*K̂[n,k,t]
+            end
         end
+
         # Step 2
         # Solve for X̂ᶠ[:,1,t]
         for n = 1:NC
@@ -306,7 +311,14 @@ function dynamic_problem!(
 
         # Step 5
         # Use results in step 2 & 4 to evaluate Euler equation
-
+        for n = 1:NC
+            for k = 1:NK
+                res_dynamic[n,k,t] = K̂[n,k,t]/(K̂[n,k,t]-(1-δ[k]))/ρ/
+                    (α[k]*rK[n,k,t+1]/Xᶠ[n,k,t]+X̂ᶠ[n,k,t]*
+                    ((1-α[k])+(p̂[n,k,t]*K̂[n,k,t]/X̂ᶠ[n,k,t])^α[k]*((1-δ[k])/(K̂[n,k,t]-(1-δ[k])))/χ̂[n,k,t]))-1
+            end
+        end
+        
         # Step 6
         # Update K̂ᵏₜ₊₁
 
