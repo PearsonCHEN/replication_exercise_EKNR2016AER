@@ -205,7 +205,7 @@ function dynamic_problem!(
     )
     # Unpack exogenous variables and parameters
     @unpack π₁, Y₁, Xᶠ₁, wL₁, rK₁ = init_dynamic
-    @unpack Dᴿ, L̂, K̂, d̂, T̂ = exos_dynamic
+    @unpack Dᴿ, L̂, d̂, T̂ = exos_dynamic
     @unpack T, NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ, ρ, δ, α = params_dynamic
 
     # Pre-allocate memory
@@ -213,9 +213,9 @@ function dynamic_problem!(
     Y = zeros(NC,NS,T)
     Xᶠ = zeros(NC,NS+1,T)
     wL = zeros(NC,T)
-    rK = similar(K̂)
+    rK = zeros(NC,NK,T)
 
-    K̂ = zeros(NC,NK,T)
+    K̂ = similar(rK)
     Ŷ = similar(Y)
 
     X̂ᶠ = similar(Y)
