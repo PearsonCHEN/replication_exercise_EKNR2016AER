@@ -77,7 +77,7 @@ function static_problem!(
     r̂ = zeros(NC,NK) # changes of capital rental rate, (𝒩,Ωₖ)
     guess_fixpoint = zeros(NC,NS) # goods price guess, (𝒩,Ωᵣ⋆)
     π̂ = similar(π) # changes of trade share, (𝒩,𝒩,Ωᵣ⋆)
-    Π = similar(π) # level of trade share in the following period, (𝒩,𝒩,Ωᵣ⋆)
+    π′ = similar(π) # level of trade share in the following period, (𝒩,𝒩,Ωᵣ⋆)
     Y′ = zeros(NC,NS) # level of sectoral GDP, (𝒩,Ωᵣ⋆)
     Xˢ = zeros(NC) # level of final demand for Semidurable(S), (𝒩)
     RHS = zeros(NC) # Right hand side of Step 7, (𝒩)
@@ -160,11 +160,14 @@ function static_problem!(
     # Form the trade share matrix at t+1
     for n = 1:NC
         for i = 1:NC
-            for j = 1:NS
+            for j = 2:NS
                 π̂[n,i,j] = (b̂[i,j]*d̂[n,i,j]/T̂[i,j]/p̂[n,j])^-θ
-                Π[n,i,j] = π[n,i,j]*π̂[n,i,j]
+                π′[n,i,j] = π[n,i,j]*π̂[n,i,j]
             end
+            π̂[n,i,1] = 1
+            π′[n,i,1] = 0
         end
+        π′[n,n,1] = 1
     end
 
     # Step 7: back out Ŷ, here goes the equation
@@ -173,7 +176,7 @@ function static_problem!(
             Y′[n,j] = Ŷ[n,j]*Y[n,j]
         end
     end
-    Xˢ = Π[:,:,3]'\(Y′[:,3])
+    Xˢ = π′[:,:,3]'\(Y′[:,3])
 
     nf = 0
     RHS[:] = Xᶠ[:,3]
@@ -186,7 +189,7 @@ function static_problem!(
         nf += 1
     end
 
-    return res_static, Ŷ, Π, ŵ, r̂, p̂
+    return res_static, Ŷ, π′, ŵ, r̂, p̂
 end
 
 #=
