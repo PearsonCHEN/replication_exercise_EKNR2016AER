@@ -238,8 +238,8 @@ function dynamic_problem!(
             π = π[1:NC,1:NC,1:NS-1,t],
             Ŷᴷ = Ŷ[1:NC,1:NK,t],
             Y = Y[1:NC,1:NS,t],
-            Xᶠ = Xᶠ[1:NC,1:NS,t],
-            Dᴿ = Dᴿ[1:NC,1:1,t+1],
+            Xᶠ = Xᶠ[1:NC,1:NS+1,t],
+            Dᴿ = Dᴿ[1:NC,t+1],
             wL = wL[1:NC,t],
             L̂ = L̂[1:NC,t],
             rK = rK[1:NC,1:NK,t],
@@ -307,7 +307,7 @@ function dynamic_problem!(
 
         # Step 3
         # Form Π[:,:,2-1,t+1] and get X[:,2,t+1]
-        X[:,2,t+1] = π[:,:,2-1,t+1]'\(Y[:,2,t+1]) 
+        X[:,2,t+1] = π[:,:,2-1,t+1]'\(Y[:,2,t+1])
 
         # Step 4
         # Solve for X̂ᶠ[:,2,t]
