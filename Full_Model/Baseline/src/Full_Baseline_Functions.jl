@@ -25,7 +25,7 @@ function factor_price_fixpoint!(
     p̂′ = zero(size(guess_fixpoint))
 
     # Resolve guess
-    p̂[:,:] = guess_fixpoint
+    p̂[1:NC,1:NS] = guess_fixpoint
 
     # Generate other variables
     for n in 1:NC
@@ -84,8 +84,8 @@ function static_problem!(
 
     # Step 1
     # Resolve guess
-    Ŷ[:,1:2] = Ŷᴷ
-    Ŷ[:,3] = guess_static
+    Ŷ[1:NC,1:2] = Ŷᴷ
+    Ŷ[1:NC,3] = guess_static
 
     # Step 2 and 3
     # Generate other variables
@@ -176,10 +176,10 @@ function static_problem!(
             Y′[n,j] = Ŷ[n,j]*Y[n,j]
         end
     end
-    Xˢ = π′[:,:,3]'\(Y′[:,3])
+    Xˢ[1:NC] = π′[1:NC,1:NC,3]'\(Y′[1:NC,3])
 
     nf = 0
-    RHS[:] = Xᶠ[:,3]
+    RHS[1:NC] = Xᶠ[1:NC,3]
     for n = 1:NC
         for j = 1:NS
             RHS[n] += β̃ᴹ[n,j,3]*Y′[n,j]
@@ -227,15 +227,15 @@ function dynamic_problem!(
     p̂ = similar(Y)
 
     # Assign initial conditions
-    π[:,:,:,1] = π₁
-    Y[:,:,1] = Y₁
-    Xᶠ[:,:,1] = Xᶠ₁
-    wL[:,1] = wL₁
-    rK[:,:,1] = rK₁
+    π[1:NC,1:NC,1:NS,1] = π₁
+    Y[1:NC,1:NS,1] = Y₁
+    Xᶠ[1:NC,1:NS+1,1] = Xᶠ₁
+    wL[1:NC,1] = wL₁
+    rK[1:NC,1:NK,1] = rK₁
 
     # Resolve guess
-    K̂[:,:,1] = guess_dynamic[:,:,1]
-    Ŷ[:,:,1:T-1] = guess_dynamic[:,:,2:T]
+    K̂[1:NC,1:NK,1] = guess_dynamic[1:NC,1:NK,1]
+    Ŷ[1:NC,1:NK,1:T-1] = guess_dynamic[1:NC,1:NK,2:T]
 
     # Evaluate Euler
     for t = 1:T-1
@@ -315,7 +315,7 @@ function dynamic_problem!(
 
         # Step 3
         # Form Π[:,:,2,t+1] and get X[:,2,t+1]
-        X[:,2,t+1] = π[:,:,2,t+1]'\(Y[:,2,t+1])
+        X[1:NC,2,t+1] = π[1:NC,1:NC,2,t+1]'\(Y[1:NC,2,t+1])
 
         # Step 4
         # Solve for X̂ᶠ[:,2,t]
