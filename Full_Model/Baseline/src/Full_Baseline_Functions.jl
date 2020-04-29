@@ -281,20 +281,28 @@ function dynamic_problem!(
         # Step 2
         # Solve for X̂ᶠ[:,1,t]
         for n = 1:NC
-            X̂ᶠ[n,1,t] = Y[n,j,t+1]
+            X̂ᶠ[n,1,t] = Y[n,1,t+1]
             for j = 1:NS
-                X̂ᶠ[n,1,t] -= β̃ᴹ[n,j,1]*Y[n,j,t]*Ŷ[n,j,t]
+                X̂ᶠ[n,1,t] -= β̃ᴹ[n,j,1]*Y[n,j,t+1]
             end
             X̂ᶠ[n,1,t] -= β̃ᴹ[n,4,1]*(Xᶠ[n,4,t]-Dᴿ[n,t+1])
             X̂ᶠ[n,1,t] /= Xᶠ[n,1,t]
         end
 
         # Step 3
-        # Form Π[:,:,2,t+1] and get Xᶠ[:,2,t+1]
-        Xᶠ[:,2,t+1] = Π[:,:,2,t+1]'\(Y[:,2,t+1])
+        # Form Π[:,:,2,t+1] and get X[:,2,t+1]
+        X[:,2,t+1] = Π[:,:,2,t+1]'\(Y[:,2,t+1])
 
         # Step 4
         # Solve for X̂ᶠ[:,2,t]
+        for n = 1:NC
+            X̂ᶠ[n,2,t] = X[n,2,t+1]
+            for j = 1:NS
+                X̂ᶠ[n,2,t] -= β̃ᴹ[n,j,2]*Y[n,j,t+1]
+            end
+            X̂ᶠ[n,2,t] -= β̃ᴹ[n,4,2]*(Xᶠ[n,4,t]-Dᴿ[n,t+1])
+            X̂ᶠ[n,2,t] /= Xᶠ[n,2,t]
+        end
 
         # Step 5
         # Use results in step 2 & 4 to evaluate Euler equation
