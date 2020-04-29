@@ -109,9 +109,9 @@ function static_problem!(
     # Form the guess
     for n = 1:NC
         for l = 1:NS
-            guess_fixpoint[n,l] = ŵ[n,l]^β̃ᴸ[n,l]
+            guess_fixpoint[n,l] = ŵ[n]^β̃ᴸ[n,l]
             for k = 1:NK
-                guess_fixpoint[n,l] *= r̂[n,l,k]^β̃ᴷ[n,l,k]
+                guess_fixpoint[n,l] *= r̂[n,k]^β̃ᴷ[n,l,k]
             end
         end
     end
