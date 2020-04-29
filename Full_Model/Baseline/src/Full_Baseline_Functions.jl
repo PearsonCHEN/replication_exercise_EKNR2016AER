@@ -213,9 +213,11 @@ function dynamic_problem!(
     Xᶠ = zeros(NC,NS+1,T)
     wL = zeros(NC,T)
     rK = similar(K̂)
+
     K̂ = zeros(NC,NK,T)
     Ŷ = similar(Y)
 
+    X̂ᶠ = similar(Y)
     # Resolve initial conditions
     π[:,:,1] = π₁
     Y[:,:,1] = Y₁
@@ -273,13 +275,21 @@ function dynamic_problem!(
             res_static, results_static.zero, exos_static, params_static)
 
         # Step 2
-        # Solve for X̂ᶠ[:,t]
-
+        # Solve for X̂ᶠ[:,1,t]
+        for n = 1:NC
+            X̂ᶠ[n,1,t] = Y[n,1,t]*Ŷ[n,1,t]
+            for j = 1:NS
+                X̂ᶠ[n,1,t] -= β̃ᴹ[n,j,1]*Y[n,j,t]*Ŷ[n,j,t]
+            end
+            X̂ᶠ[n,1,t] -= β̃ᴹ[n,4,1]*(Xᶠ[n,4,t]-Dᴿ[n,t+1])
+            X̂ᶠ[n,1,t] /= Xᶠ[n,1,t]
+        end
+        
         # Step 3
-        # Form Π[:,:,t+1]
+        # Form Π[:,:,2,t+1]
 
         # Step 4
-        # Solve for X̂ᶠ[:,t+1]
+        # Solve for X̂ᶠ[:,2,t]
 
         # Step 5
         # Use results in step 2 & 4 to evaluate Euler equation
