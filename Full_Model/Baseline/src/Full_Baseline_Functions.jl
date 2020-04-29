@@ -219,6 +219,11 @@ function dynamic_problem!(
     Ŷ = similar(Y)
     X̂ᶠ = similar(Xᶠ)
 
+    Ŷ_static = similar(Y)
+    ŵ = similar(wL)
+    r̂ = similar(rK)
+    p̂ = similar(Y)
+
     # Assign initial conditions
     π[:,:,:,1] = π₁
     Y[:,:,1] = Y₁
@@ -252,7 +257,7 @@ function dynamic_problem!(
         )
         exos_static = myexos_static()
         params_static = myparams_static()
-        guess_static = Ŷ[:,3,t]
+        guess_static = Ŷ[1:NC,3,t]
 
         # Solve the static problem
         println("Start to solve the static problem.")
@@ -280,10 +285,11 @@ function dynamic_problem!(
 
         # Catch Solutions
         res_static = similar(results_static.zero)
-        res_static, Ŷ[:,3,t], π[:,:,:,t+1], ŵ[:,t], r̂[:,:,t], p̂[:,:,t] = factor_price_fixpoint!(
+        res_static, Ŷ_static[1:NC,3,t], π[1:NC,1:NC,1:NS,t+1], ŵ[1:NC,t], r̂[1:NC,1:NK,t], p̂[1:NC,1:NS,t] = factor_price_fixpoint!(
             res_static, results_static.zero, exos_static, params_static)
 
         # Update level variables Part I
+        Ŷ[1:NC,3,t] = Ŷ_static[1:NC,3,t]
         for n = 1:NC
             wL[n,t+1] = wL[n,t]*ŵ[n,t]*L̂[n,t]
             for j = 1:NS
