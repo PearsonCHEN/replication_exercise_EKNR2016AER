@@ -241,7 +241,7 @@ function dynamic_problem!(
         )
         exos_static = myexos_static()
         params_static = myparams_static()
-        guess_static = Ŷ[:,3,tt]
+        guess_static = Ŷ[:,3,t]
 
         # Solve the static problem
         println("Start to solve the static problem.")
