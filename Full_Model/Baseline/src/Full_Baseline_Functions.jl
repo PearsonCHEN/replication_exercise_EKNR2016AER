@@ -72,13 +72,13 @@ function static_problem!(
     @unpack NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ = params_static
 
     # Pre-allocate memory
-    # Ωᵣ⋆={C,D,S}, Ωₖ={C,D}, Ωₜ={D,S}
+    # Ωᵣ⋆={C,D,S}, Ωₖ={C,D}, Ω={C,D,S}
     Ŷ = zeros(NC,NS) # changes of sectoral GDP, (𝒩,Ωᵣ⋆)
     ŵ = zeros(NC) # changes of labor wage, (𝒩)
     r̂ = zeros(NC,NK) # changes of capital rental rate, (𝒩,Ωₖ)
     guess_fixpoint = zeros(NC,NS) # goods price guess, (𝒩,Ωᵣ⋆)
-    π̂ = similar(π) # changes of trade share, (𝒩,𝒩,Ωₜ)
-    Π = similar(π) # level of trade share in the following period, (𝒩,𝒩,Ωₜ)
+    π̂ = similar(π) # changes of trade share, (𝒩,𝒩,Ω)
+    Π = similar(π) # level of trade share in the following period, (𝒩,𝒩,Ω)
     Y′ = zeros(NC,NS) # level of sectoral GDP, (𝒩,Ωᵣ⋆)
     Xˢ = zeros(NC) # level of final demand for Semidurable(S), (𝒩)
     RHS = zeros(NC) # Right hand side of Step 7, (𝒩)
@@ -161,7 +161,7 @@ function static_problem!(
     # Form the trade share matrix at t+1
     for n = 1:NC
         for i = 1:NC
-            for j = 1:NS-1
+            for j = 1:NS
                 π̂[n,i,j] = (b̂[i,j]*d̂[n,i,j]/T̂[i,j]/p̂[n,j])^-θ
                 Π[n,i,j] = π[n,i,j]*π̂[n,i,j]
             end
@@ -174,7 +174,7 @@ function static_problem!(
             Y′[n,j] = Ŷ[n,j]*Y[n,j]
         end
     end
-    Xˢ = Π[:,:,3-1]'\(Y′[:,3]) # the second dimension of π is D, corresponding to the third dimension of Y′
+    Xˢ = Π[:,:,3]'\(Y′[:,3])
 
     nf = 0
     RHS[:] = Xᶠ[:,3]
@@ -209,7 +209,7 @@ function dynamic_problem!(
     @unpack T, NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ, ρ, δ, α = params_dynamic
 
     # Pre-allocate memory
-    π = zeros(NC,NC,NS-1,T)
+    π = zeros(NC,NC,NS,T)
     Y = zeros(NC,NS,T)
     Xᶠ = zeros(NC,NS+1,T)
     wL = zeros(NC,T)
@@ -235,7 +235,7 @@ function dynamic_problem!(
         # Step 1
         # Calls subroutine 2
         myexos_static = @with_kw (
-            π = π[1:NC,1:NC,1:NS-1,t],
+            π = π[1:NC,1:NC,1:NS,t],
             Ŷᴷ = Ŷ[1:NC,1:NK,t],
             Y = Y[1:NC,1:NS,t],
             Xᶠ = Xᶠ[1:NC,1:NS+1,t],
@@ -306,8 +306,8 @@ function dynamic_problem!(
         end
 
         # Step 3
-        # Form Π[:,:,2-1,t+1] and get X[:,2,t+1]
-        X[:,2,t+1] = π[:,:,2-1,t+1]'\(Y[:,2,t+1])
+        # Form Π[:,:,2,t+1] and get X[:,2,t+1]
+        X[:,2,t+1] = π[:,:,2,t+1]'\(Y[:,2,t+1])
 
         # Step 4
         # Solve for X̂ᶠ[:,2,t]
