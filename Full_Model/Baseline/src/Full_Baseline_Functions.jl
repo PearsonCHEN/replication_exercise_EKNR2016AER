@@ -327,7 +327,7 @@ function dynamic_problem!(
 
         # Step 7
         # Iterate from t -> T-1, update level variables
-            #= Updated in Part I
+            #= Updated levels in Part I
                 π[:,:,t+1] = π[:,:,t].*π̂[:,:,t]
                 Y[:,:,t+1] = Y[:,:,t].*Ŷ[:,:,t]
                 wL[:,t+1] = wL[:,t].*ŵ[:,t].*L̂[:,t]
@@ -336,7 +336,7 @@ function dynamic_problem!(
         # Update level variables Part II
         for n = 1:NC
             for j = 1:NS
-                Xᶠ[n,j,t+1] = Xᶠ[n,j,t].*X̂ᶠ[n,j,t]
+                Xᶠ[n,j,t+1] = Xᶠ[n,j,t]*X̂ᶠ[n,j,t]
             end
         end
     end
