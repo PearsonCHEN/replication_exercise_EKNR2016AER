@@ -161,7 +161,7 @@ function static_problem!(
     # Form the trade share matrix at t+1
     for n = 1:NC
         for i = 1:NC
-            for j = 1:NS
+            for j = 1:NS-1
                 π̂[n,i,j] = (b̂[i,j]*d̂[n,i,j]/T̂[i,j]/p̂[n,j])^-θ
                 Π[n,i,j] = π[n,i,j]*π̂[n,i,j]
             end
@@ -174,7 +174,7 @@ function static_problem!(
             Y′[n,j] = Ŷ[n,j]*Y[n,j]
         end
     end
-    Xˢ = Π[:,:,3]'\(Y′[:,3])
+    Xˢ = Π[:,:,3-1]'\(Y′[:,3]) # the second dimension of π is D, corresponding to the third dimension of Y′
 
     nf = 0
     RHS[:] = Xᶠ[:,3]
@@ -306,8 +306,8 @@ function dynamic_problem!(
         end
 
         # Step 3
-        # Form Π[:,:,2,t+1] and get X[:,2,t+1]
-        X[:,2,t+1] = π[:,:,2,t+1]'\(Y[:,2,t+1])
+        # Form Π[:,:,2-1,t+1] and get X[:,2,t+1]
+        X[:,2,t+1] = π[:,:,2-1,t+1]'\(Y[:,2,t+1]) 
 
         # Step 4
         # Solve for X̂ᶠ[:,2,t]
