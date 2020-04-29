@@ -338,10 +338,15 @@ function dynamic_problem!(
                 Xᶠ[n,j,t+1] = Xᶠ[n,j,t].*X̂ᶠ[n,j,t]
             end
         end
-
     end
-        # Step 8
-        # Evaluate terminal conditions
+
+    # Step 8
+    # Evaluate terminal conditions
+    for n = 1:NC
+        for k = 1:NK
+            res_dynamic[n,k,T] = K̂[n,k,T]/1-1
+        end
+    end
 
     return res_dynamic,
 end
