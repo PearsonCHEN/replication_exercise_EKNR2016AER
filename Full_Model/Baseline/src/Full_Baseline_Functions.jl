@@ -68,7 +68,7 @@ function static_problem!(
     params_static::NamedTuple,
     )
     # Unpack exogenous variables and parameters
-    @unpack π, Ŷᴷ, Y, Xᶠ, Dᴿ, wL, L̂, rK, K̂, d̂, T̂= exos_static
+    @unpack π, Ŷᴷ, Y, Xᶠ, Dᴿ, wL, L̂, rK, K̂, d̂, T̂ = exos_static
     @unpack NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ = params_static
 
     # Pre-allocate memory
@@ -118,9 +118,11 @@ function static_problem!(
 
     # Pack exogenous variables and parameters for solve the price
     myexos_fixpoint = @with_kw(
-        ŵ = ŵ, r̂ = r̂, π = π, d̂ = d̂, T̂ = T̂)
+        ŵ = ŵ, r̂ = r̂, π = π, d̂ = d̂, T̂ = T̂
+    )
     myparams_fixpoint = @with_kw(
-        NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, β̃ᴹ = β̃ᴹ, θ = θ)
+        NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, β̃ᴹ = β̃ᴹ, θ = θ
+    )
     exos_fixpoint = myexos_fixpoint()
     params_fixpoint = myparams_fixpoint()
 
@@ -196,38 +198,101 @@ end
 function dynamic_problem!(
     res_dynamic::AbstractArray,
     guess_dynamic::AbstractArray, # K̂[1:NC,1:NK,1] and Ŷ[1:NC,1:NS,1:T-1]
+    init_dynamic::NamedTuple,
     exos_dynamic::NamedTuple,
     params_dynamic::NamedTuple,
     )
     # Unpack exogenous variables and parameters
-    @unpack  = exos_dynamic
-    @unpack  = params_dynamic
+    @unpack π₁, Y₁, Xᶠ₁, wL₁, rK₁ = init_dynamic
+    @unpack Dᴿ, L̂, K̂, d̂, T̂ = exos_dynamic
+    @unpack T, NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ = params_dynamic
 
     # Pre-allocate memory
+    π = zeros(NC,NC,NS-1,T)
+    Y = zeros(NC,NS,T)
+    Xᶠ = zeros(NC,NS+1,T)
+    wL = zeros(NC,T)
+    rK = similar(K̂)
+    K̂ = zeros(NC,NK,T)
+    Ŷ = similar(Y)
 
-    # Step 1
-    # Calls subroutine 2
+    # Resolve initial conditions
+    π[:,:,1] = π₁
+    Y[:,:,1] = Y₁
+    Xᶠ[:,:,1] = Xᶠ₁
+    wL[:,1] = wL₁
+    rK[:,:,1] = rK₁
 
-    # Step 2
-    # Solve for X̂ᶠ[:,1]
+    # Resolve guess
+    K̂[:,:,1] = guess_dynamic[:,:,1]
+    Ŷ[:,:,1:T-1] = guess_dynamic[:,:,2:T]
 
-    # Step 3
-    # Form Π[:,:,2]
+    # Evaluate Euler
+    for tt = 1:T-1
+        # Step 1
+        # Calls subroutine 2
+        myexos_static = @with_kw (
+            π = π[:,:,tt], Ŷᴷ = Ŷ[:,1:NK,tt], Y = Y[:,:,tt], Xᶠ = Xᶠ[:,:,tt],
+            Dᴿ = Dᴿ[:,:,tt+1], wL = wL[:,:,tt], L̂ = L̂[:,:,tt], rK = rK[:,:,tt],
+            K̂ = K̂[:,:,tt], d̂ = d̂[:,:,tt], T̂ = T̂[:,:,tt],
+        )
+        myparams_static = @with_kw (
+            NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, ψ = ψ, θ = θ, β̃ᴹ = β̃ᴹ
+        )
+        exos_static = myexos_static()
+        params_static = myparams_static()
+        guess_static = Ŷ[:,3,tt]
 
-    # Step 4
-    # Solve for X̂ᶠ[:,2]
+        # Solve the static problem
+        println("Start to solve the static problem.")
+        println("Run time and memory cost:")
+        @time results_static =
+            try
+                results_static = nlsolve(
+                    (res_static, guess_static) -> factor_price_fixpoint!(
+                        res_static, guess_static, exos_static, params_static),
+                    guess_static,
+                    ftol=1e-6,
+                    method=:newton,
+                    autodiff=:forward,
+                    show_trace=false,
+                )
+            catch err
+                if isa(err, DomainError)
+                    error("Failed to solve the static problem, please try again.")
+                end
+            end
 
-    # Step 5
-    # Use results in step 2 & 4 to evaluate Euler equation
+        # Check Convergence
+        converged(results_static) || error("Failed to converge in $(results_static.iterations) iterations.")
+        println("Successfully solved the fix point problem.\n")
 
-    # Step 6
-    # Update K̂ᵏₜ₊₁
+        # Catch Solutions
+        res_static = similar(results_static.zero)
+        res_static, Ŷ[:,3,tt], Π[:,:,:,tt] = factor_price_fixpoint!(
+            res_static, results_static.zero, exos_static, params_static)
 
-    # Step 7
-    # Iterate from t -> T-1
+        # Step 2
+        # Solve for X̂ᶠ[:,1]
 
-    # Step 8
-    # Evaluate terminal conditions
+        # Step 3
+        # Form Π[:,:,2]
+
+        # Step 4
+        # Solve for X̂ᶠ[:,2]
+
+        # Step 5
+        # Use results in step 2 & 4 to evaluate Euler equation
+
+        # Step 6
+        # Update K̂ᵏₜ₊₁
+
+        # Step 7
+        # Iterate from t -> T-1
+
+    end
+        # Step 8
+        # Evaluate terminal conditions
 
     return res_dynamic,
 end
