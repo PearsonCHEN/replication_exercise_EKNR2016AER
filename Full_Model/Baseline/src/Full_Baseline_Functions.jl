@@ -309,18 +309,18 @@ function dynamic_problem!(
             X̂ᶠ[n,2,t] /= Xᶠ[n,2,t]
         end
 
-        # Step 5
+        # Step 5, 6
         # Use results in step 2 & 4 to evaluate Euler equation
         for n = 1:NC
             for k = 1:NK
+                # Euler equation
                 res_dynamic[n,k,t] = K̂[n,k,t]/(K̂[n,k,t]-(1-δ[k]))/ρ/
                     (α[k]*rK[n,k,t+1]/Xᶠ[n,k,t]+X̂ᶠ[n,k,t]*
                     ((1-α[k])+(p̂[n,k,t]*K̂[n,k,t]/X̂ᶠ[n,k,t])^α[k]*((1-δ[k])/(K̂[n,k,t]-(1-δ[k])))/χ̂[n,k,t]))-1
+                # Update K̂ᵏₜ₊₁
+                K̂[n,k,t+1] = χ̂[n,k,t]*(X̂ᶠ[n,k,t]/p̂[n,k,t]/K̂[n,k,t])^α[k]*(K̂[n,k,t]-(1-δ[k]))+(1-δ[k])
             end
         end
-        
-        # Step 6
-        # Update K̂ᵏₜ₊₁
 
         # Step 7
         # Iterate from t -> T-1
