@@ -53,9 +53,9 @@ end
 ###################################################################
 K̂ = ones(NC, NK, T)
 Ŷ = ones(NC, NK, T)
-guess = ones(NC, NK, T)
-guess[1:NC,1:NK,1] = K̂[1:NC,1:NK,1]
-guess[1:NC,1:NK,2:T] = Ŷ[1:NC,1:NK,1:T-1]
+guess_dynamic = ones(NC, NK, T)
+guess_dynamic[1:NC,1:NK,1] = K̂[1:NC,1:NK,1]
+guess_dynamic[1:NC,1:NK,2:T] = Ŷ[1:NC,1:NK,1:T-1]
 
 ###################################################################
 # Preallocate memory
@@ -105,6 +105,39 @@ myexos_dynamic = @with_kw (
     Dᴿ = D[1:NC,4,1:T], L̂ = L̂[1:NC,1:T], d̂ = d̂[1:NC,1:NC,1:NS,1:T], T̂ = T̂[1:NC,1:NS,1:T])
 myparams_dynamic = @with_kw (
     T = T, NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, ψ = ψ, θ = θ, β̃ᴹ = β̃ᴹ, ρ = ρ, δ = δ, α = α)
+init_dynamic = myinit_dynamic()
+exos_dynamic = myexos_dynamic()
+params_dynamic = myparams_dynamic()
+
+## Solve the dynamic problem
+# Solve the fix point problem
+println("Start to solve the dynamic problem.")
+println("Run time and memory cost:")
+@time results_dynamic =
+    try
+        results_dynamic = nlsolve(
+            (res_dynamic, guess_dynamic) -> dynamic_problem!(
+                res_dynamic, guess_dynamic, exos_dynamic, params_dynamic),
+            guess_dynamic,
+            ftol=1e-6,
+            method=:newton,
+            autodiff=:forward,
+            show_trace=false,
+        )
+    catch err
+        if isa(err, DomainError)
+            error("Failed to solve the dynamic problem, please try again.")
+        end
+    end
+
+# Check Convergence
+converged(results_dynamic) || error("Failed to converge in $(results_dynamic.iterations) iterations.")
+println("Successfully solved the dynamic problem.\n")
+
+# Catch Solutions
+res_dynamic = similar(results_dynamic.zero)
+res_dynamic, K̂, Ŷ = dynamic_problem!(
+    res_dynamic, results_dynamic.zero, exos_dynamic, params_dynamic)
 
 ## Config use
 show(Data[1,:], allcols=:true)

@@ -365,5 +365,5 @@ function dynamic_problem!(
         end
     end
 
-    return res_dynamic,
+    return res_dynamic, K̂, Ŷ
 end
