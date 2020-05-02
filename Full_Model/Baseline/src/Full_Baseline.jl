@@ -118,7 +118,7 @@ println("Run time and memory cost:")
     try
         results_dynamic = nlsolve(
             (res_dynamic, guess_dynamic) -> dynamic_problem!(
-                res_dynamic, guess_dynamic, exos_dynamic, params_dynamic),
+                res_dynamic, guess_dynamic, init_dynamic, exos_dynamic, params_dynamic),
             guess_dynamic,
             ftol=1e-6,
             method=:newton,
