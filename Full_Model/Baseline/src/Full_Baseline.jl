@@ -75,10 +75,10 @@ guess[1:NC,1:NK,2:T] = Ŷ[1:NC,1:NK,1:T-1]
 # Preallocate memory
 ###################################################################
 π = zeros(NC, NC, NS, T)
-D = zeros(NC, NS, T)
-Y = zeros(NC, NS, T)
-X = zeros(NC, NS, T)
-Xᶠ = zeros(NC, NS, T)
+D = zeros(NC, NS+1, T)
+Y = zeros(NC, NS+1, T)
+X = zeros(NC, NS+1, T)
+Xᶠ = zeros(NC, NS+1, T)
 rK = zeros(NC, NK, T)
 wL = zeros(NC, T)
 
