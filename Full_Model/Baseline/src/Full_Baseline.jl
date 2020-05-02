@@ -70,18 +70,35 @@ Ŷ = ones(NC, NS, T)
 guess = ones(NC, NS, T); guess[:,:,1] = K̂[:,:,1]; guess[:,:,2:T] = Ŷ[:,:,1:T-1]
 
 ###################################################################
+# Preallocate memory
+###################################################################
+π = zeros(NC, NC, NS, T)
+D = zeros(NC, NS, T)
+Y = zeros(NC, NS, T)
+X = zeros(NC, NS, T)
+Xᶠ = zeros(NC, NS, T)
+rK = zeros(NC, NK, T)
+wL = zeros(NC, T)
+
+###################################################################
 # Initial Conditions
 ###################################################################
-π = ones(NC, NC, NS)
-for country in 1:1:NC
-    π[country, :, :] = Matrix(π_data[(country-1)*NC+1:country*NC, 2:4])
+for country in 1:NC
+    π[country,1:NC,1:NS,1] = Matrix(π_data[(country-1)*NC+1:country*NC, 2:4])
 end
-D = [Data.DC1 Data.DD1 Data.DS1 Data.DR1]
-Y₀ = [Data.yC1 Data.yD1 Data.yS1 Data.yR1]
-X₀ = [Data.xC1 Data.xD1 Data.xS1 Data.xR1]
-Xᶠ = [Data.xFC1 Data.xFD1 Data.xFS1 Data.xFR1]
-rK = [Data.capCinc1 Data.capDinc1]
-wL = Data.labinc1
+D[1:NC,1:NS+1,1] = [Data.DC1 Data.DD1 Data.DS1 Data.DR1]
+Y[1:NC,1:NS+1,1] = [Data.yC1 Data.yD1 Data.yS1 Data.yR1]
+X[1:NC,1:NS+1,1] = [Data.xC1 Data.xD1 Data.xS1 Data.xR1]
+Xᶠ[1:NC,1:NS+1,1] = [Data.xFC1 Data.xFD1 Data.xFS1 Data.xFR1]
+rK[1:NC,1:NK,1] = [Data.capCinc1 Data.capDinc1]
+wL[1:NC,1] = Data.labinc1
+
+# Pack init conditions, exogenous variables and parameters
+myinit_dynamic = @with_kw (
+    π₁ = π[1:NC,1:NC,1:NS,1], Y₁ = Y[1:NC,1:NS+1,1], Xᶠ₁ = Xᶠ[1:NC,1:NS+1,1], wL₁ = wL[1:NC,1], rK₁ = rK[1:NC,1:NK,1])
+myexos_dynamic = @with_kw (Dᴿ = Dᴿ, L̂ = L̂, d̂ = d̂, T̂ = T̂)
+myparams_dynamic = @with_kw (
+    T = T, NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, ψ = ψ, θ = θ, β̃ᴹ = β̃ᴹ, ρ = ρ, δ = δ, α = α)
 
 # Config use
 show(Data[1,:], allcols=:true)
