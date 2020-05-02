@@ -67,7 +67,9 @@ L̂ = ones(NC, T)
 ###################################################################
 K̂ = ones(NC, NS, T)
 Ŷ = ones(NC, NS, T)
-guess = ones(NC, NS, T); guess[:,:,1] = K̂[:,:,1]; guess[:,:,2:T] = Ŷ[:,:,1:T-1]
+guess = ones(NC, NK, T)
+guess[1:NC,1:NK,1] = K̂[1:NC,1:NK,1]
+guess[1:NC,1:NK,2:T] = Ŷ[1:NC,1:NK,1:T-1]
 
 ###################################################################
 # Preallocate memory
