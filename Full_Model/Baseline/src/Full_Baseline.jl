@@ -9,6 +9,7 @@ using CSV
 using NLsolve
 #using Plots
 
+include("Full_Baseline_Functions.jl")
 ## Read data
 Data = CSV.read(joinpath(@__DIR__, "..", "input", "part1_21cty.csv"))
 π_data = CSV.read(joinpath(@__DIR__, "..", "input", "part2_21cty.csv"))
@@ -17,7 +18,7 @@ Data = CSV.read(joinpath(@__DIR__, "..", "input", "part1_21cty.csv"))
 # Parameters
 ###################################################################
 # Program Parameters
-NC = size(Data, 1) # Number of countries
+NC = 21 # Number of countries
 NS = 3 # Number of sectors
 NK = 2 # Number of capital types(C and D, corresponding to sector 1 and 2)
 T₁ = 211
