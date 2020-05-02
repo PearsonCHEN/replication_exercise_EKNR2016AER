@@ -37,7 +37,7 @@ Data = Data[Data.date.==T₁, 3:end]
 # Production
 α = [Data.alphaC[1] Data.alphaD[1] 0.5] # Investment efficiency
 δ = [Data.deltaC[1] Data.deltaD[1]] # Depreciation rete
-θ = [2 2] # Trade elasticity for sector D and S
+θ = 2 # Trade elasticity for sector D and S
 β̃ᴸ = ones(NC, NS+1)
 β̃ᴷ = ones(NC, NS+1, NK)
 β̃ᴹ = ones(NC, NS+1, NS)
@@ -70,7 +70,7 @@ rK = zeros(NC, NK, T)
 wL = zeros(NC, T)
 
 # Exogenous variables
-D = zeros(NC, NS+1, T)
+D = zeros(NC, NS+1)
 
 ###################################################################
 # Initial Conditions
@@ -93,6 +93,7 @@ Â = ones(NC, NS, T)
 d̂ = ones(NC, NC, NS, T)
 L̂ = ones(NC, T)
 ϕ̂ = ones(NC, T)
+
 D[1:NC,1:NS+1,1] = [Data.DC1 Data.DD1 Data.DS1 Data.DR1]
 D = repeat(D,1,1,T)
 T̂ = ones(NC,NS,T)
