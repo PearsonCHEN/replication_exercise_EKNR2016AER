@@ -117,10 +117,10 @@ function static_problem!(
     end
 
     # Pack exogenous variables and parameters for solve the price
-    myexos_fixpoint = @with_kw(
+    myexos_fixpoint = @with_kw (
         ŵ = ŵ[1:NC], r̂ = r̂[1:NC,1:NK], π = π[1:NC,1:NC,1:NS], d̂ = d̂[1:NC,1:NC,1:NS], T̂ = T̂[1:NC,1:NS]
     )
-    myparams_fixpoint = @with_kw(
+    myparams_fixpoint = @with_kw (
         NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, β̃ᴹ = β̃ᴹ, θ = θ
     )
     exos_fixpoint = myexos_fixpoint()
@@ -228,7 +228,7 @@ function dynamic_problem!(
 
     # Assign initial conditions
     π[1:NC,1:NC,1:NS,1] = π₁
-    Y[1:NC,1:NS,1] = Y₁
+    Y[1:NC,1:NS,1] = Y₁[1:NC,1:NS]
     Xᶠ[1:NC,1:NS+1,1] = Xᶠ₁
     wL[1:NC,1] = wL₁
     rK[1:NC,1:NK,1] = rK₁
