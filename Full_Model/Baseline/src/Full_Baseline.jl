@@ -9,58 +9,44 @@ using CSV
 using NLsolve
 #using Plots
 
-# Program Parameters
-T₀ = 211
-T_data = 0
-T_tail = 150
-T = T_data+T_tail
-
-# Read data
+## Read data
 Data = CSV.read(joinpath(@__DIR__, "..", "input", "part1_21cty.csv"))
 π_data = CSV.read(joinpath(@__DIR__, "..", "input", "part2_21cty.csv"))
-Data = Data[Data.date.==T₀, 3:end]
-π_data = π_data[π_data.date.==T₀, 5:end]
 
 ###################################################################
 # Parameters
 ###################################################################
+# Program Parameters
 NC = size(Data, 1) # Number of countries
 NS = 3 # Number of sectors
 NK = 2 # Number of capital types(C and D, corresponding to sector 1 and 2)
+T₁ = 211
+T_data = 0
+T_tail = 150
+T = T_data+T_tail
+
+# Pick the final period
+Data = Data[Data.date.==T₁, 3:end]
+π_data = π_data[π_data.date.==T₁, 5:end]
 
 # Preference
 ρ = Data.rho[1] # Intertemporal elasticity of substitution
+ψ = [Data.psiC[1] Data.psiD[1] Data.psiN[1]]
 
 # Production
 α = [Data.alphaC[1] Data.alphaD[1] 0.5] # Investment efficiency
 δ = [Data.deltaC[1] Data.deltaD[1]] # Depreciation rete
 θ = [2 2] # Trade elasticity for sector D and S
 β̃ᴸ = ones(NC, NS+1)
-β̃ᴷ = ones(NC, NS+1, NS-1)
+β̃ᴷ = ones(NC, NS+1, NK)
 β̃ᴹ = ones(NC, NS, NS)
 β̃ᴸ = [Data.betaTilLC Data.betaTilLD Data.betaTilLS Data.betaTilLR] # Labor's income share
 β̃ᴷ_temp = [Data.betaTilKCC Data.betaTilKDC Data.betaTilKSC Data.betaTilKRC Data.betaTilKCD Data.betaTilKDD Data.betaTilKSD Data.betaTilKRD]
-β̃ᴹ_temp = [Data.betaTilICC Data.betaTilICD Data.betaTilICS Data.betaTilIDC Data.betaTilIDD Data.betaTilIDS Data.betaTilISC Data.betaTilISD Data.betaTilISS]
+β̃ᴹ_temp = [Data.betaTilICC Data.betaTilIDC Data.betaTilISC Data.betaTilIRC Data.betaTilICD Data.betaTilIDD Data.betaTilISD Data.betaTilIRD Data.betaTilICS Data.betaTilIDS Data.betaTilISS Data.betaTilIRS]
 for country in eachindex(β̃ᴷ_temp[:,1])
-    β̃ᴷ[country, :, :] = reshape(β̃ᴷ_temp[country, :], NS+1, NS-1) # Capital's income share
-    β̃ᴹ[country, :, :] = reshape(β̃ᴹ_temp[country, :], NS, NS) # Intermediate's income share
+    β̃ᴷ[country, :, :] = reshape(β̃ᴷ_temp[country, :], NS+1, NK) # Capital's income share
+    β̃ᴹ[country, :, :] = reshape(β̃ᴹ_temp[country, :], NS+1, NS) # Intermediate's income share
 end
-
-###################################################################
-# Exogenous Variables
-###################################################################
-# Time-invariant in this numerical procedure
-Â = ones(NC, NS, T)
-χ̂ = ones(NC, NS, T)
-d̂ = ones(NC, NC, NS, T)
-L̂ = ones(NC, T)
-ϕ̂ = ones(NC, T)
-#ψ̂ˢ = ones(NC, T)
-#ϕ̂ᵂ = ones(NC*NS, T)
-
-# Data for Sector R
-β̃ᴷᴿ = [Data.betaTilKRC Data.betaTilKRD]
-β̃ᴹᴹ = [Data.betaTilIRC Data.betaTilIRD Data.betaTilIRS]
 
 ###################################################################
 # Guess
@@ -74,6 +60,7 @@ guess[1:NC,1:NK,2:T] = Ŷ[1:NC,1:NK,1:T-1]
 ###################################################################
 # Preallocate memory
 ###################################################################
+# Level variables
 π = zeros(NC, NC, NS, T)
 Y = zeros(NC, NS+1, T)
 # X = zeros(NC, NS+1, T)
@@ -81,6 +68,7 @@ Xᶠ = zeros(NC, NS+1, T)
 rK = zeros(NC, NK, T)
 wL = zeros(NC, T)
 
+# Exogenous variables
 D = zeros(NC, NS+1, T)
 
 ###################################################################
@@ -98,13 +86,19 @@ wL[1:NC,1] = Data.labinc1
 ###################################################################
 # Exogenous Variables
 ###################################################################
+# Time-varying variables(Hold constant in this procedure)
+Â = ones(NC, NS, T)
+χ̂ = ones(NC, NS, T)
+d̂ = ones(NC, NC, NS, T)
+L̂ = ones(NC, T)
+ϕ̂ = ones(NC, T)
 D[1:NC,1:NS+1,1] = [Data.DC1 Data.DD1 Data.DS1 Data.DR1]
 D = repeat(D,1,1,T)
-L̂ = ones(NC,T)
-d̂ = ones(NC,NC,NS,T)
 T̂ = ones(NC,NS,T)
+#ψ̂ˢ = ones(NC, T)
+#ϕ̂ᵂ = ones(NC*NS, T)
 
-# Pack init conditions, exogenous variables and parameters
+## Pack init conditions, exogenous variables and parameters
 myinit_dynamic = @with_kw (
     π₁ = π[1:NC,1:NC,1:NS,1], Y₁ = Y[1:NC,1:NS+1,1], Xᶠ₁ = Xᶠ[1:NC,1:NS+1,1], wL₁ = wL[1:NC,1], rK₁ = rK[1:NC,1:NK,1])
 myexos_dynamic = @with_kw (
@@ -112,5 +106,5 @@ myexos_dynamic = @with_kw (
 myparams_dynamic = @with_kw (
     T = T, NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, ψ = ψ, θ = θ, β̃ᴹ = β̃ᴹ, ρ = ρ, δ = δ, α = α)
 
-# Config use
+## Config use
 show(Data[1,:], allcols=:true)
