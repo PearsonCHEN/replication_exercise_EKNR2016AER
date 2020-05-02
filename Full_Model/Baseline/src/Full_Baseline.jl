@@ -39,7 +39,7 @@ Data = Data[Data.date.==T₁, 3:end]
 θ = [2 2] # Trade elasticity for sector D and S
 β̃ᴸ = ones(NC, NS+1)
 β̃ᴷ = ones(NC, NS+1, NK)
-β̃ᴹ = ones(NC, NS, NS)
+β̃ᴹ = ones(NC, NS+1, NS)
 β̃ᴸ = [Data.betaTilLC Data.betaTilLD Data.betaTilLS Data.betaTilLR] # Labor's income share
 β̃ᴷ_temp = [Data.betaTilKCC Data.betaTilKDC Data.betaTilKSC Data.betaTilKRC Data.betaTilKCD Data.betaTilKDD Data.betaTilKSD Data.betaTilKRD]
 β̃ᴹ_temp = [Data.betaTilICC Data.betaTilIDC Data.betaTilISC Data.betaTilIRC Data.betaTilICD Data.betaTilIDD Data.betaTilISD Data.betaTilIRD Data.betaTilICS Data.betaTilIDS Data.betaTilISS Data.betaTilIRS]
