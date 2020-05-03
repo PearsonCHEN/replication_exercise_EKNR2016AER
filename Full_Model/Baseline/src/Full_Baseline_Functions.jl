@@ -188,7 +188,7 @@ function static_problem!(
         nf += 1
     end
 
-    return res_static, Ŷ, π′, ŵ, r̂, p̂
+    return res_static, Ŷ[1:NC,3], π′, ŵ, r̂, p̂
 end
 
 #=
@@ -281,7 +281,7 @@ function dynamic_problem!(
 
         # Check Convergence
         converged(results_static) || error("Failed to converge in $(results_static.iterations) iterations.")
-        println("Successfully solved the fix point problem.\n")
+        println("Successfully solved the static problem.\n")
 
         # Catch Solutions
         res_static = similar(results_static.zero)
