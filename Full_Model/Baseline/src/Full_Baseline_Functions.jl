@@ -30,7 +30,7 @@ function factor_price_fixpoint!(
     # Generate other variables
     for n in 1:NC
         for l in 1:NS
-            b̂[n,l] = ŵ[n,l]^β̃ᴸ[n,l]
+            b̂[n,l] = ŵ[n]^β̃ᴸ[n,l]
             for k in 1:NK
                 b̂[n,l] *= r̂[n,k]^β̃ᴷ[n,l,k]
             end
