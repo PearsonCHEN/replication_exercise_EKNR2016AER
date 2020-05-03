@@ -296,7 +296,7 @@ function dynamic_problem!(
                 Y[n,j,t+1] = Y[n,j,t]*Ŷ[n,j,t]
             end
             for k = 1:NK
-                rK[n,t+1] = rK[n,k,t]*r̂[n,k,t]*K̂[n,k,t]
+                rK[n,k,t+1] = rK[n,k,t]*r̂[n,k,t]*K̂[n,k,t]
             end
         end
 
