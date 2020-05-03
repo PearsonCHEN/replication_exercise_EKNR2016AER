@@ -184,7 +184,7 @@ function static_problem!(
         for j = 1:NS
             RHS[n] += β̃ᴹ[n,j,3]*Y′[n,j]
         end
-        RHS[n] += β̃ᴹ[n,j,4]*(Xᶠ[n,4]-Dᴿ[n])
+        RHS[n] += β̃ᴹ[n,4,3]*(Xᶠ[n,4]-Dᴿ[n])
         res_static[nf+1] = Xˢ[n]/RHS[n]-1
         nf += 1
     end
