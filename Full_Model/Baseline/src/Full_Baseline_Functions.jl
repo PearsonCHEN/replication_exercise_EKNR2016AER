@@ -32,7 +32,7 @@ function factor_price_fixpoint!(
         for l in 1:NS
             b̂[n,l] = ŵ[n,l]^β̃ᴸ[n,l]
             for k in 1:NK
-                b̂[n,l] *= r̂[n,l,k]^β̃ᴷ[n,l,k]
+                b̂[n,l] *= r̂[n,k]^β̃ᴷ[n,l,k]
             end
             for j in 1:NS
                 b̂[n,l] *= p̂[n,j]^β̃ᴹ[n,l,j]
