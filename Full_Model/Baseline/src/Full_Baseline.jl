@@ -8,7 +8,6 @@ using Parameters
 using CSV
 using NLsolve
 #using Plots
-
 include("Full_Baseline_Functions.jl")
 res_dynamic = similar(guess_dynamic)
 dynamic_problem!(res_dynamic, guess_dynamic, init_dynamic, exos_dynamic, params_dynamic)
