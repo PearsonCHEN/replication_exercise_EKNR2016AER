@@ -215,6 +215,7 @@ function dynamic_problem!(
     Xᶠ = zeros(NC,NS+1,T)
     wL = zeros(NC,T)
     rK = zeros(NC,NK,T)
+    X = zeros(NC,NS,T)
 
     K̂ = similar(rK)
     Ŷ = similar(Y)
@@ -231,7 +232,10 @@ function dynamic_problem!(
     Xᶠ[1:NC,1:NS+1,1] = Xᶠ₁
     wL[1:NC,1] = wL₁
     rK[1:NC,1:NK,1] = rK₁
-
+    for s in 1:NS
+        X[1:NC,s,1] = π[1:NC,1:NC,s,t+1]'\(Y[1:NC,s,t+1])
+    end
+    
     # Resolve guess
     K̂[1:NC,1:NK,1] = guess_dynamic[1:NC,1:NK,1]
     Ŷ[1:NC,1:NK,1:T-1] = guess_dynamic[1:NC,1:NK,2:T]
