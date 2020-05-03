@@ -124,6 +124,7 @@ function static_problem!(
         NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, β̃ᴹ = β̃ᴹ, θ = θ
     )
     exos_fixpoint = myexos_fixpoint()
+    println(keys(exos_fixpoint))
     params_fixpoint = myparams_fixpoint()
 
     # Solve the fix point problem
@@ -137,8 +138,7 @@ function static_problem!(
                 guess_fixpoint,
                 ftol=1e-6,
                 method=:newton,
-                autodiff=:forward,
-                show_trace=false,
+                show_trace=true,
             )
         catch err
             if isa(err, DomainError)
@@ -264,22 +264,21 @@ function dynamic_problem!(
         # Solve the static problem
         println("Start to solve the static problem.")
         println("Run time and memory cost:")
-        @time results_static =
-            try
+        #@time results_static =
+        #    try
                 results_static = nlsolve(
-                    (res_static, guess_static) -> factor_price_fixpoint!(
+                    (res_static, guess_static) -> static_problem!(
                         res_static, guess_static, exos_static, params_static),
                     guess_static,
                     ftol=1e-6,
                     method=:newton,
-                    autodiff=:forward,
-                    show_trace=false,
+                    show_trace=true,
                 )
-            catch err
-                if isa(err, DomainError)
-                    error("Failed to solve the static problem, please try again.")
-                end
-            end
+        #    catch err
+        #        if isa(err, DomainError)
+        #            error("Failed to solve the static problem, please try again.")
+        #        end
+        #    end
 
         # Check Convergence
         converged(results_static) || error("Failed to converge in $(results_static.iterations) iterations.")

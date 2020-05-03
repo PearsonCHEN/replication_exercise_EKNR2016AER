@@ -10,6 +10,8 @@ using NLsolve
 #using Plots
 
 include("Full_Baseline_Functions.jl")
+res_dynamic = similar(guess_dynamic)
+dynamic_problem!(res_dynamic, guess_dynamic, init_dynamic, exos_dynamic, params_dynamic)
 ## Read data
 Data = CSV.read(joinpath(@__DIR__, "..", "input", "part1_21cty.csv"))
 π_data = CSV.read(joinpath(@__DIR__, "..", "input", "part2_21cty.csv"))
@@ -123,7 +125,6 @@ println("Run time and memory cost:")
             guess_dynamic,
             ftol=1e-6,
             method=:newton,
-            autodiff=:forward,
             show_trace=false,
         )
     catch err
