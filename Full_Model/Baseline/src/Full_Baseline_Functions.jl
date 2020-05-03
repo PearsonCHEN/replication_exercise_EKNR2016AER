@@ -22,7 +22,7 @@ function factor_price_fixpoint!(
     # Pre-allocate memory
     p̂ = similar(guess_fixpoint)
     b̂ = similar(guess_fixpoint)
-    p̂′ = zero(size(guess_fixpoint))
+    p̂′ = zeros(size(guess_fixpoint))
 
     # Resolve guess
     p̂[1:NC,1:NS] = guess_fixpoint
@@ -130,8 +130,8 @@ function static_problem!(
     # Solve the fix point problem
     println("Start to solve the fix point problem.")
     println("Run time and memory cost:")
-    @time results_fixpoint =
-        try
+    #@time results_fixpoint =
+    #    try
             results_fixpoint = nlsolve(
                 (res_fixpoint, guess_fixpoint) -> factor_price_fixpoint!(
                     res_fixpoint, guess_fixpoint, exos_fixpoint, params_fixpoint),
@@ -140,11 +140,11 @@ function static_problem!(
                 method=:newton,
                 show_trace=true,
             )
-        catch err
-            if isa(err, DomainError)
-                error("Failed to solve the fix point problem, please try again.")
-            end
-        end
+    #    catch err
+    #        if isa(err, DomainError)
+    #            error("Failed to solve the fix point problem, please try again.")
+    #        end
+    #    end
 
     # Check Convergence
     converged(results_fixpoint) || error("Failed to converge in $(results_fixpoint.iterations) iterations.")
