@@ -100,7 +100,7 @@ function static_problem!(
             for j = 1:NS
                 r̂[n,k] += β̃ᴷ[n,j,k]*Y[n,j]*Ŷ[n,j]
             end
-            r̂[n,k] += β̃ᴷ[n,4,k]*(Xᶠ[n,4]-Dᴿ[n])+(Xᶠ[n,3]+Xᶠ[n,4])*ψ[n,k]/ψ[n,3]
+            r̂[n,k] += β̃ᴷ[n,4,k]*(Xᶠ[n,4]-Dᴿ[n])+(Xᶠ[n,3]+Xᶠ[n,4])*ψ[k]/ψ[3]
             r̂[n,k] /= rK[n,k]*K̂[n,k]
         end
     end
