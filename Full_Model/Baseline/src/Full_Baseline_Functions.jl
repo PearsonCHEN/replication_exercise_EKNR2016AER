@@ -124,12 +124,11 @@ function static_problem!(
         NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, β̃ᴹ = β̃ᴹ, θ = θ
     )
     exos_fixpoint = myexos_fixpoint()
-    println(keys(exos_fixpoint))
     params_fixpoint = myparams_fixpoint()
 
     # Solve the fix point problem
-    println("Start to solve the fix point problem.")
-    println("Run time and memory cost:")
+    #println("Start to solve the fix point problem.")
+    #println("Run time and memory cost:")
     #@time results_fixpoint =
     #    try
             results_fixpoint = nlsolve(
@@ -138,7 +137,7 @@ function static_problem!(
                 guess_fixpoint,
                 ftol=1e-6,
                 method=:newton,
-                show_trace=true,
+                show_trace=false,
             )
     #    catch err
     #        if isa(err, DomainError)
@@ -147,8 +146,8 @@ function static_problem!(
     #    end
 
     # Check Convergence
-    converged(results_fixpoint) || error("Failed to converge in $(results_fixpoint.iterations) iterations.")
-    println("Successfully solved the fix point problem.\n")
+    #converged(results_fixpoint) || error("Failed to converge in $(results_fixpoint.iterations) iterations.")
+    #println("Successfully solved the fix point problem.\n")
 
     # Catch Solutions
     res_fixpoint = similar(results_fixpoint.zero)
@@ -286,7 +285,7 @@ function dynamic_problem!(
 
         # Catch Solutions
         res_static = similar(results_static.zero)
-        res_static, Ŷ_static[1:NC,3,t], π[1:NC,1:NC,1:NS,t+1], ŵ[1:NC,t], r̂[1:NC,1:NK,t], p̂[1:NC,1:NS,t] = factor_price_fixpoint!(
+        res_static, Ŷ_static[1:NC,3,t], π[1:NC,1:NC,1:NS,t+1], ŵ[1:NC,t], r̂[1:NC,1:NK,t], p̂[1:NC,1:NS,t] = static_problem!(
             res_static, results_static.zero, exos_static, params_static)
 
         # Update level variables Part I
