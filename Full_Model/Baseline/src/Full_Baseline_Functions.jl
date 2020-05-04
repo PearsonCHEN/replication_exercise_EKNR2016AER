@@ -35,9 +35,9 @@ function factor_price_fixpoint!(
                 b̂[n,l] *= r̂[n,k]^β̃ᴷ[n,l,k]
             end
             for j in 1:NS
-                if p̂[n,j]<0
+                #=if p̂[n,j]<0
                     println(guess_fixpoint)
-                end
+                end=#
                 b̂[n,l] *= p̂[n,j]^β̃ᴹ[n,l,j]
             end
         end
@@ -277,6 +277,7 @@ function dynamic_problem!(
                         res_static, guess_static, exos_static, params_static),
                     guess_static,
                     ftol=1e-6,
+                    method=:newton,
                     show_trace=true,
                 )
         #    catch err
@@ -378,7 +379,21 @@ function dynamic_problem!(
             for j = 1:NS
                 Xᶠ[n,j,t+1] = Xᶠ[n,j,t]*X̂ᶠ[n,j,t]
             end
+            Xᶠ[n,4,t+1] = Xᶠ[n,4,t] #   *ϕ̂[n,t]*ψ̂[n,4,t]
         end
+        myexos_static = @with_kw (
+            π = π[1:NC,1:NC,1:NS,t+1],
+            Ŷᴷ = Ŷ[1:NC,1:NK,t+1],
+            Y = Y[1:NC,1:NS,t+1],
+            Xᶠ = Xᶠ[1:NC,1:NS+1,t+1],
+            Dᴿ = Dᴿ[1:NC,t+1+1],
+            wL = wL[1:NC,t+1],
+            L̂ = L̂[1:NC,t+1],
+            rK = rK[1:NC,1:NK,t+1],
+            K̂ = K̂[1:NC,1:NK,t+1],
+            d̂ = d̂[1:NC,1:NC,1:NS,t+1],
+            T̂ = T̂[1:NC,1:NS,t+1],
+        )
     end
 
     # Step 8
