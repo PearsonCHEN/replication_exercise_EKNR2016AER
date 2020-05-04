@@ -5,12 +5,11 @@
 
 # Precompile Packages
 using Parameters
+using Tables
 using CSV
 using NLsolve
 #using Plots
 include("Full_Baseline_Functions.jl")
-res_dynamic = similar(guess_dynamic)
-dynamic_problem!(res_dynamic, guess_dynamic, init_dynamic, exos_dynamic, params_dynamic)
 ## Read data
 Data = CSV.read(joinpath(@__DIR__, "..", "input", "part1_21cty.csv"))
 π_data = CSV.read(joinpath(@__DIR__, "..", "input", "part2_21cty.csv"))
@@ -49,7 +48,6 @@ for country in eachindex(β̃ᴷ_temp[:,1])
     β̃ᴷ[country, :, :] = reshape(β̃ᴷ_temp[country, :], NS+1, NK) # Capital's income share
     β̃ᴹ[country, :, :] = reshape(β̃ᴹ_temp[country, :], NS+1, NS) # Intermediate's income share
 end
-
 ###################################################################
 # Guess
 ###################################################################
@@ -77,14 +75,17 @@ D = zeros(NC, NS+1)
 # Initial Conditions
 ###################################################################
 for country in 1:NC
-    π[country,1:NC,1:NS,1] = Matrix(π_data[(country-1)*NC+1:country*NC, 2:4])
+    π[1:NC,country,1:NS,1] = Matrix(π_data[(country-1)*NC+1:country*NC, 2:4])
 end
 Y[1:NC,1:NS+1,1] = [Data.yC1 Data.yD1 Data.yS1 Data.yR1]
 # X[1:NC,1:NS+1,1] = [Data.xC1 Data.xD1 Data.xS1 Data.xR1]
 Xᶠ[1:NC,1:NS+1,1] = [Data.xFC1 Data.xFD1 Data.xFS1 Data.xFR1]
 rK[1:NC,1:NK,1] = [Data.capCinc1 Data.capDinc1]
 wL[1:NC,1] = Data.labinc1
-
+X = zeros(NC,NS,1)
+for s in 1:NS
+    X[1:NC,s,1] = π[1:NC,1:NC,s,1]'\(Y[1:NC,s,1])
+end
 ###################################################################
 # Exogenous Variables
 ###################################################################
@@ -111,11 +112,11 @@ myparams_dynamic = @with_kw (
 init_dynamic = myinit_dynamic()
 exos_dynamic = myexos_dynamic()
 params_dynamic = myparams_dynamic()
-
 ## Solve the dynamic problem
 # Solve the fix point problem
 println("Start to solve the dynamic problem.")
 println("Run time and memory cost:")
+include("Full_Baseline_Functions.jl")
 @time results_dynamic =
     try
         results_dynamic = nlsolve(
