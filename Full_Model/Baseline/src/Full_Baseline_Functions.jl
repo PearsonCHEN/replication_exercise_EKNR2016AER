@@ -35,6 +35,9 @@ function factor_price_fixpoint!(
                 b̂[n,l] *= r̂[n,k]^β̃ᴷ[n,l,k]
             end
             for j in 1:NS
+                if p̂[n,j]<0
+                    println(guess_fixpoint)
+                end
                 b̂[n,l] *= p̂[n,j]^β̃ᴹ[n,l,j]
             end
         end
@@ -163,10 +166,10 @@ function static_problem!(
                 π̂[n,i,j] = (b̂[i,j]*d̂[n,i,j]/T̂[i,j]/p̂[n,j])^-θ
                 π′[n,i,j] = π[n,i,j]*π̂[n,i,j]
             end
-            π̂[n,i,1] = 1
-            π′[n,i,1] = 0
+            π̂[n,i,1] = 1.0
+            π′[n,i,1] = 0.0
         end
-        π′[n,n,1] = 1
+        π′[n,n,1] = 1.0
     end
 
     # Step 7: back out Ŷ, here goes the equation
@@ -274,7 +277,6 @@ function dynamic_problem!(
                         res_static, guess_static, exos_static, params_static),
                     guess_static,
                     ftol=1e-6,
-                    method=:newton,
                     show_trace=true,
                 )
         #    catch err
@@ -329,12 +331,32 @@ function dynamic_problem!(
             X̂ᶠ[n,2,t] -= β̃ᴹ[n,4,2]*(Xᶠ[n,4,t]-Dᴿ[n,t+1])
             X̂ᶠ[n,2,t] /= Xᶠ[n,2,t]
         end
-
+        #=
+        debug_t = 1
+        colnames = [[string("X[1:NC,",i,",",debug_t,"]") for i in 1:3]; [string("Y[1:NC,",i,",",debug_t,"]") for i in 1:3];[string("XF[1:NC,",i,",",debug_t,"]") for i in 1:4]]
+        colnames = [Symbol(names) for names in colnames]
+        π_colnames = [[string("pi[1:NC,",i,",1,",debug_t,"]") for i in 1:21];[string("pi[1:NC,",i,",2,",debug_t,"]") for i in 1:21];[string("pi[1:NC,",i,",3,",debug_t,"]") for i in 1:21]]
+        π_colnames = [Symbol(names) for names in π_colnames]
+        CSV.write(string("debug_t",debug_t,".csv"),Tables.table([X[1:NC,1:NS,debug_t] Y[1:NC,1:NS,debug_t] Xᶠ[1:NC,1:NS+1,debug_t]];header=colnames))
+        CSV.write(string("pi_debug_t",debug_t,".csv"),Tables.table([π[1:NC,1:NC,1,debug_t] π[1:NC,1:NC,2,debug_t] π[1:NC,1:NC,3,debug_t]];header=π_colnames))
+        =#
         # Step 5, 6
         # Use results in step 2 & 4 to evaluate Euler equation
         for n = 1:NC
             for k = 1:NK
                 # Euler equation
+#=
+                println(K̂[n,k,t])
+                println(p̂[n,k,t])
+                println(X̂ᶠ[n,k,t])
+                println(Y[n,k,t])
+                println(X[n,k,t])
+                println(p̂[n,k,t]*K̂[n,k,t]/X̂ᶠ[n,k,t])
+                println(X̂ᶠ[n,k,t]*
+                ((1-α[k])+(p̂[n,k,t]*K̂[n,k,t]/X̂ᶠ[n,k,t])^α[k]*((1-δ[k])/(K̂[n,k,t]-(1-δ[k])))/χ̂[n,k,t]))
+                println((α[k]*rK[n,k,t+1]/Xᶠ[n,k,t]+X̂ᶠ[n,k,t]*
+                ((1-α[k])+(p̂[n,k,t]*K̂[n,k,t]/X̂ᶠ[n,k,t])^α[k]*((1-δ[k])/(K̂[n,k,t]-(1-δ[k])))/χ̂[n,k,t])))
+=#
                 res_dynamic[n,k,t] = K̂[n,k,t]/(K̂[n,k,t]-(1-δ[k]))/ρ/
                     (α[k]*rK[n,k,t+1]/Xᶠ[n,k,t]+X̂ᶠ[n,k,t]*
                     ((1-α[k])+(p̂[n,k,t]*K̂[n,k,t]/X̂ᶠ[n,k,t])^α[k]*((1-δ[k])/(K̂[n,k,t]-(1-δ[k])))/χ̂[n,k,t]))-1
