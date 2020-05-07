@@ -53,10 +53,10 @@ end
 ###################################################################
 K̂ = ones(NC, NK, T)
 Ŷ = ones(NC, NK, T)
-guess_dynamic = ones(NC, NK, T)
+guess_dynamic = Array{Float64,3}(undef,NC,NK,T)
 guess_dynamic[1:NC,1:NK,1] = K̂[1:NC,1:NK,1]
 guess_dynamic[1:NC,1:NK,2:T] = Ŷ[1:NC,1:NK,1:T-1]
-
+guess_1d = reshape(guess_dynamic,NC*NK*T)
 ###################################################################
 # Preallocate memory
 ###################################################################
@@ -117,15 +117,17 @@ params_dynamic = myparams_dynamic()
 println("Start to solve the dynamic problem.")
 println("Run time and memory cost:")
 include("Full_Baseline_Functions.jl")
+res_dynamic = similar(guess_dynamic)
 @time results_dynamic =
     try
         results_dynamic = nlsolve(
             (res_dynamic, guess_dynamic) -> dynamic_problem!(
                 res_dynamic, guess_dynamic, init_dynamic, exos_dynamic, params_dynamic),
-            guess_dynamic,
+            guess_1d,
             ftol=1e-6,
             method=:newton,
-            show_trace=false,
+            autodiff=:forward,
+            show_trace=true,
         )
     catch err
         if isa(err, DomainError)
