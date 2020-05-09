@@ -2,12 +2,12 @@
 ## Date: April 2020
 ## Julia version: 1.3.1
 ## Purpose: Solve EKNR(2016) Full Model - Baseline Equilibrium
-
-# Precompile Packages
+## Precompile Packages
 using Parameters
 using Tables
 using CSV
 using NLsolve
+using LineSearches
 #using Plots
 include("Full_Baseline_Functions.jl")
 ## Read data
@@ -123,7 +123,7 @@ res_dynamic = similar(guess_dynamic)
         results_dynamic = nlsolve(
             (res_dynamic, guess_dynamic) -> dynamic_problem!(
                 res_dynamic, guess_dynamic, init_dynamic, exos_dynamic, params_dynamic),
-            guess_1d,
+            guess_dynamic,
             ftol=1e-6,
             method=:newton,
             autodiff=:forward,
@@ -134,7 +134,7 @@ res_dynamic = similar(guess_dynamic)
             error("Failed to solve the dynamic problem, please try again.")
         end
     end
-
+dynamic_a,dynamic_b,dynamic_c,dynamic_d = dynamic_problem!(res_dynamic, guess_dynamic, init_dynamic, exos_dynamic, params_dynamic)
 # Check Convergence
 converged(results_dynamic) || error("Failed to converge in $(results_dynamic.iterations) iterations.")
 println("Successfully solved the dynamic problem.\n")

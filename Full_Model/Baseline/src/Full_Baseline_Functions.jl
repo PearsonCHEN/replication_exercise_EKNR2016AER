@@ -194,6 +194,203 @@ function static_problem!(
     return res_static, Ŷ[1:NC,3], π′, ŵ, r̂, p̂
 end
 
+function solve_fixpoint(
+        guess_fixpoint::AbstractArray, # Product price, dim = NC*NS
+        exos_fixpoint::NamedTuple,
+        params_fixpoint::NamedTuple;
+        tol_fixpoint = 1e-6,
+        iter_max = 100000,
+        )
+
+    # Unpack exogenous variables and parameters
+    @unpack ŵ, r̂, π, d̂, T̂ = exos_fixpoint
+    @unpack NC, NS, NK, β̃ᴸ, β̃ᴷ, β̃ᴹ, θ = params_fixpoint
+
+    # Pre-allocate memory
+    p̂ = zeros(eltype(guess_fixpoint),size(guess_fixpoint))
+    b̂ = zeros(eltype(guess_fixpoint),size(guess_fixpoint))
+    p̂_new = zeros(eltype(guess_fixpoint),size(guess_fixpoint))
+
+    p̂[1:NC,1:NS] = guess_fixpoint
+
+    dist_fixpoint = 1
+    iter_fixpoint = 0
+    while dist_fixpoint > tol_fixpoint && iter_fixpoint < iter_max
+        for n in 1:NC
+            for l in 1:NS
+                b̂[n,l] = ŵ[n]^β̃ᴸ[n,l]
+                for k in 1:NK
+                    b̂[n,l] *= r̂[n,k]^β̃ᴷ[n,l,k]
+                end
+                for j in 1:NS
+                    b̂[n,l] *= p̂[n,j]^β̃ᴹ[n,l,j]
+                end
+            end
+        end
+
+        for n in 1:NC
+            for j in 1:NS
+                p̂_new[n,j] = 0.0
+                for i = 1:NC
+                    p̂_new[n,j] += π[n,i,j]*(b̂[i,j]*d̂[n,i,j]/T̂[i,j])^-θ
+                end
+                p̂_new[n,j] = p̂_new[n,j]^(-1/θ)
+            end
+        end
+
+        dist_fixpoint = maximum(abs.((p̂_new)-(p̂)))
+        p̂ = p̂_new
+        iter_fixpoint += 1
+    end
+
+    dist_fixpoint < tol_fixpoint || error("Fail to converge.")
+    return dist_fixpoint, iter_fixpoint, p̂, b̂
+end
+
+function solve_static(
+    guess_static::AbstractArray, # Product price, dim = NC*NS
+    exos_static::NamedTuple,
+    params_static::NamedTuple;
+    tol_static = 1e-6,
+    iter_max = 1000000,
+    )
+    # Unpack exogenous variables and parameters
+    @unpack π, Ŷᴷ, Y, Xᶠ, Dᴿ, wL, L̂, rK, K̂, d̂, T̂ = exos_static
+    @unpack NC, NS, NK, β̃ᴸ, β̃ᴷ, ψ, θ, β̃ᴹ = params_static
+
+    # Pre-allocate memory, note that Ωᵣ⋆={C,D,S}, Ωₖ={C,D}
+    Ŷ = zeros(eltype(guess_static),NC,NS) # changes of sectoral GDP, (𝒩,Ωᵣ⋆)
+    ŵ = zeros(eltype(guess_static),NC) # changes of labor wage, (𝒩)
+    r̂ = zeros(eltype(guess_static),NC,NK) # changes of capital rental rate, (𝒩,Ωₖ)
+    guess_fixpoint = zeros(eltype(guess_static),NC,NS) # goods price guess, (𝒩,Ωᵣ⋆)
+    π̂ = zeros(eltype(guess_static),size(π)) # changes of trade share, (𝒩,𝒩,Ωᵣ⋆)
+    π′ = zeros(eltype(guess_static),size(π)) # level of trade share in the following period, (𝒩,𝒩,Ωᵣ⋆)
+    Ŷ_new = zeros(eltype(guess_static),NC,NS) # level of sectoral GDP, (𝒩,Ωᵣ⋆)
+    Xˢ = zeros(eltype(guess_static),NC) # level of final demand for Semidurable(S), (𝒩)
+    p̂ = zeros(eltype(guess_static),NC,NS) # Goods price (𝒩,Ωᵣ⋆)
+    b̂ = zeros(eltype(guess_static),NC,NS) # Factor price (𝒩,Ωᵣ⋆)
+
+    # Step 1
+    # Resolve guess
+    Ŷ[1:NC,1:2] = Ŷᴷ
+    Ŷ[1:NC,3] = guess_static
+
+    dist_static = 1
+    iter_static = 0
+    while dist_static > tol_static && iter_static < iter_max
+        # Step 2 and 3
+        # Generate other variables
+        for n = 1:NC
+            ŵ[n] = 0.0
+            for j = 1:NS
+                ŵ[n] += β̃ᴸ[n,j]*Y[n,j]*Ŷ[n,j]
+            end
+            ŵ[n] += β̃ᴸ[n,4]*(Xᶠ[n,4]-Dᴿ[n])
+            ŵ[n] /= wL[n]*L̂[n]
+
+            for k = 1:NK
+                r̂[n,k] = 0.0
+                for j = 1:NS
+                    r̂[n,k] += β̃ᴷ[n,j,k]*Y[n,j]*Ŷ[n,j]
+                    if r̂[n,k]<0
+                        error(r̂[n,k])
+                    end
+                end
+                r̂[n,k] += β̃ᴷ[n,4,k]*(Xᶠ[n,4]-Dᴿ[n])+(Xᶠ[n,3]+Xᶠ[n,4])*ψ[k]/ψ[3]
+                if r̂[n,k]<0
+                    error(r̂[n,k])
+                end
+
+                r̂[n,k] /= rK[n,k]*K̂[n,k]
+                if rK[n,k]*K̂[n,k]<0
+                    println(n)
+                    println(k)
+                    println(rK[n,k])
+                    println(K̂[n,k])
+                    error(r̂[n,k])
+                end
+            end
+        end
+
+        # Step 4: Solve for the goods price
+        # Form the guess
+        guess_fixpoint = zeros(eltype(guess_static),NC,NS)
+        for n = 1:NC
+            for l = 1:NS
+                guess_fixpoint[n,l] = ŵ[n]^β̃ᴸ[n,l]
+                for k = 1:NK
+                    if r̂[n,k]<0
+                        error(r̂[n,k])
+                    end
+                    guess_fixpoint[n,l] *= r̂[n,k]^β̃ᴷ[n,l,k]
+                end
+            end
+        end
+
+        myexos_fixpoint = @with_kw (
+            ŵ = ŵ[1:NC], r̂ = r̂[1:NC,1:NK], π = π[1:NC,1:NC,1:NS], d̂ = d̂[1:NC,1:NC,1:NS], T̂ = T̂[1:NC,1:NS])
+        myparams_fixpoint = @with_kw (
+            NC = NC, NS = NS, NK = NK, β̃ᴸ = β̃ᴸ, β̃ᴷ = β̃ᴷ, β̃ᴹ = β̃ᴹ, θ = θ)
+        exos_fixpoint = myexos_fixpoint()
+        params_fixpoint = myparams_fixpoint()
+
+        res_fixpoint, iter_fixpoint, p̂[1:NC,1:NS], b̂[1:NC,1:NS] = solve_fixpoint(
+            guess_fixpoint[1:NC,1:NS], exos_fixpoint, params_fixpoint)
+
+        # error(string("Get it with ", iter_fixpoint," iterations. The residual is ", res_fixpoint))
+
+        # Step 5 and 6
+        # Get changes of trade shares for Semidurable(S) in the appendix or Nondurable(N) in the paper
+        # Form the trade share matrix at t+1
+        for n = 1:NC
+            for i = 1:NC
+                for j = 2:NS
+                    π̂[n,i,j] = (b̂[i,j]*d̂[n,i,j]/T̂[i,j]/p̂[n,j])^-θ
+                    π′[n,i,j] = π[n,i,j]*π̂[n,i,j]
+                end
+                π̂[n,i,1] = 1.0
+                π′[n,i,1] = 0.0
+            end
+            π′[n,n,1] = 1.0
+        end
+
+        # Step 7: back out Ŷ, here goes the equation
+        Ŷ_new[1:NC,3] = Xᶠ[1:NC,3]
+        for n = 1:NC
+            for j = 1:NS
+                Ŷ_new[n,3] += β̃ᴹ[n,j,3]*Ŷ[n,j]*Y[n,j]
+            end
+            Ŷ_new[n,3] += β̃ᴹ[n,4,3]*(Xᶠ[n,4]-Dᴿ[n])
+        end
+
+        Ŷ_new[1:NC,3] = π′[1:NC,1:NC,3]'*Ŷ_new[1:NC,3]
+        for n = 1:NC
+            Ŷ_new[n,3] = Ŷ_new[n,3]/Y[n,3]
+        end
+
+        dist_static = maximum(abs.((Ŷ_new[1:NC,3])-(Ŷ[1:NC,3])))
+        Ŷ[1:NC,3] = Ŷ_new[1:NC,3]
+        iter_static += 1
+    end
+    dist_static < tol_static || error("Fail to converge with residual=", dist_static,".")
+    return dist_static, iter_static, Ŷ[1:NC,3], π′, ŵ, r̂, p̂
+end
+#=
+    nf = 0
+    RHS[1:NC] = Xᶠ[1:NC,3]
+    for n = 1:NC
+        for j = 1:NS
+            RHS[n] += β̃ᴹ[n,j,3]*Y′[n,j]
+        end
+        RHS[n] += β̃ᴹ[n,4,3]*(Xᶠ[n,4]-Dᴿ[n])
+        res_static[nf+1] = Xˢ[n]/RHS[n]-1
+        nf += 1
+    end
+
+    return res_static, Ŷ[1:NC,3], π′, ŵ, r̂, p̂
+end
+=#
+
 #=
     Subroutine 3
     - This function solves the whole dynamic problem.
@@ -222,12 +419,15 @@ function dynamic_problem!(
 
     K̂ = ones(eltype(guess_dynamic),size(rK))
     Ŷ = ones(eltype(guess_dynamic),size(Y))
-    X̂ᶠ = similar(Xᶠ)
+    X̂ᶠ = ones(eltype(guess_dynamic),size(Xᶠ))
 
-    Ŷ_static = similar(Y)
-    ŵ = similar(wL)
-    r̂ = similar(rK)
-    p̂ = similar(Y)
+    Ŷ_static = ones(eltype(guess_dynamic),size(Y))
+    ŵ = ones(eltype(guess_dynamic),size(wL))
+    r̂ = ones(eltype(guess_dynamic),size(rK))
+    b̂ = ones(eltype(guess_dynamic),size(Y))
+    p̂ = ones(eltype(guess_dynamic),size(Y))
+
+    negative_penalty = zeros(eltype(guess_dynamic),NC,NS,T)
 
     # Assign initial conditions
     π[1:NC,1:NC,1:NS,1] = π₁
@@ -248,7 +448,25 @@ function dynamic_problem!(
     # println("Start to evaluate euler residuals.")
     for t = 1:T-1
         # Step 1
-        # Calls subroutine 2
+        # Solve static problem
+        for n = 1:NC
+            ŵ[n,t] = 0.0
+            for j = 1:NS
+                ŵ[n,t] += β̃ᴸ[n,j]*Y[n,j,t]*Ŷ[n,j,t]
+            end
+            ŵ[n,t] += β̃ᴸ[n,4]*(Xᶠ[n,4,t]-Dᴿ[n,t+1])
+            ŵ[n,t] /= wL[n,t]*L̂[n,t]
+
+            for k = 1:NK
+                r̂[n,k,t] = 0.0
+                for j = 1:NS
+                    r̂[n,k,t] += β̃ᴷ[n,j,k]*Y[n,j,t]*Ŷ[n,j,t]
+                end
+                r̂[n,k,t] += β̃ᴷ[n,4,k]*(Xᶠ[n,4,t]-Dᴿ[n,t+1])+(Xᶠ[n,3,t]+Xᶠ[n,4,t])*ψ[k]/ψ[3]
+                r̂[n,k,t] /= rK[n,k,t]*K̂[n,k,t]
+            end
+        end
+## Step 1: solve static
         myexos_static = @with_kw (
             π = π[1:NC,1:NC,1:NS,t],
             Ŷᴷ = Ŷ[1:NC,1:NK,t],
@@ -269,33 +487,8 @@ function dynamic_problem!(
         params_static = myparams_static()
         guess_static = Ŷ[1:NC,3,t]
 
-        # Solve the static problem
-        # println(string("Start to solve the static problem in period ",t,"."))
-        # println("Run time and memory cost:")
-        #@time results_static =
-        #    try
-                results_static = nlsolve(
-                    (res_static, guess_static) -> static_problem!(
-                        res_static, guess_static, exos_static, params_static),
-                    guess_static,
-                    ftol=1e-12,
-                    method=:anderson,
-                    show_trace=false,
-                )
-        #    catch err
-        #        if isa(err, DomainError)
-        #            error("Failed to solve the static problem, please try again.")
-        #        end
-        #    end
-
-        # Check Convergence
-        # converged(results_static) || error("Failed to converge in $(results_static.iterations) iterations.")
-        # println(string("Successfully solved the static problem in period ",t,".\n"))
-
-        # Catch Solutions
-        res_static = similar(results_static.zero)
-        res_static, Ŷ_static[1:NC,3,t], π[1:NC,1:NC,1:NS,t+1], ŵ[1:NC,t], r̂[1:NC,1:NK,t], p̂[1:NC,1:NS,t] = static_problem!(
-            res_static, results_static.zero, exos_static, params_static)
+        res_static, iter_static, Ŷ_static[1:NC,3,t], π[1:NC,1:NC,1:NS,t+1], ŵ[1:NC,t], r̂[1:NC,1:NK,t], p̂[1:NC,1:NS,t] = solve_static(
+            guess_static, exos_static, params_static)
 
         # Update level variables Part I
         Ŷ[1:NC,3,t] = Ŷ_static[1:NC,3,t]
@@ -310,8 +503,8 @@ function dynamic_problem!(
         end
         X[1:NC,3,t+1] = π[1:NC,1:NC,3,t+1]'\(Y[1:NC,3,t+1])
 
-        # Step 2
-        # Solve for X̂ᶠ[:,1,t]
+## Step 2 Solve for X̂ᶠ[:,1,t]
+        inv_thres = 0.25
         X[1:NC,1,t+1] = Y[1:NC,1,t+1]
         for n = 1:NC
             X̂ᶠ[n,1,t] = Y[n,1,t+1]
@@ -320,14 +513,16 @@ function dynamic_problem!(
             end
             X̂ᶠ[n,1,t] -= β̃ᴹ[n,4,1]*(Xᶠ[n,4,t]-Dᴿ[n,t+1])
             X̂ᶠ[n,1,t] /= Xᶠ[n,1,t]
+            negative_penalty[n,1,t] = (X̂ᶠ[n,1,t]-inv_thres)^2*(X̂ᶠ[n,1,t]<=inv_thres)
+            X̂ᶠ[n,1,t] > inv_thres || println(string("n=",n,",k=",1,",t=",t,",negative_penalty=",negative_penalty[n,1,t]))
+            X̂ᶠ[n,1,t] = X̂ᶠ[n,1,t]*(X̂ᶠ[n,1,t]>inv_thres)+inv_thres*(X̂ᶠ[n,1,t]<=inv_thres)
         end
 
-        # Step 3
-        # Form Π[:,:,2,t+1] and get X[:,2,t+1]
+
+## Step 3: Form Π[:,:,2,t+1] and get X[:,2,t+1]
         X[1:NC,2,t+1] = π[1:NC,1:NC,2,t+1]'\(Y[1:NC,2,t+1])
 
-        # Step 4
-        # Solve for X̂ᶠ[:,2,t]
+## Step 4: Solve for X̂ᶠ[:,2,t]
         for n = 1:NC
             X̂ᶠ[n,2,t] = X[n,2,t+1]
             for j = 1:NS
@@ -335,17 +530,18 @@ function dynamic_problem!(
             end
             X̂ᶠ[n,2,t] -= β̃ᴹ[n,4,2]*(Xᶠ[n,4,t]-Dᴿ[n,t+1])
             X̂ᶠ[n,2,t] /= Xᶠ[n,2,t]
+            negative_penalty[n,2,t] = (X̂ᶠ[n,2,t]-inv_thres)^2*(X̂ᶠ[n,2,t]<=inv_thres)
+            X̂ᶠ[n,2,t] > inv_thres || println(string("n=",n,",k=",2,",t=",t,",X̂ᶠ[n,2,t]=",X̂ᶠ[n,2,t],",negative_penalty=",negative_penalty[n,2,t]))
+            X̂ᶠ[n,2,t] = X̂ᶠ[n,2,t]*(X̂ᶠ[n,2,t]>inv_thres)+inv_thres*(X̂ᶠ[n,2,t]<=inv_thres)
         end
 
-        # Step 5
-        # Update level variables
+## Step 5: Update the rest level variables
             #= Update(d) levels(I)
                 π[:,:,t+1] = π[:,:,t].*π̂[:,:,t]
                 Y[:,:,t+1] = Y[:,:,t].*Ŷ[:,:,t]
                 wL[:,t+1] = wL[:,t].*ŵ[:,t].*L̂[:,t]
                 rK[:,:,t+1] = rK[:,:,t].*r̂[:,:,t].*K̂[:,:,t]
             =#
-        # Update level variables(II)
         for n = 1:NC
             for j = 1:NK
                 Xᶠ[n,j,t+1] = Xᶠ[n,j,t]*X̂ᶠ[n,j,t]
@@ -354,12 +550,12 @@ function dynamic_problem!(
             Xᶠ[n,4,t+1] = Xᶠ[n,4,t] #   *ϕ̂[n,t]*ψ̂[n,4,t]
         end
 
-        # Step 6, 7
-        # Use results in step 2 & 4 to evaluate Euler equation
+#= Step 6: Use results in step 2 & 4 to evaluate Euler equation
+   Step 7: Update K̂[1:NC,1:NK,t+1]
+=#
         for n = 1:NC
             for k = 1:NK
                 # Euler equation
-                #=
                 if p̂[n,k,t]*K̂[n,k,t]/X̂ᶠ[n,k,t]<0
                     println(n)
                     println(k)
@@ -375,11 +571,34 @@ function dynamic_problem!(
                     CSV.write(string("debug_t",debug_t,".csv"),Tables.table([X[1:NC,1:NS,debug_t] Y[1:NC,1:NS,debug_t] Xᶠ[1:NC,1:NS+1,debug_t]];header=colnames))
                     CSV.write(string("pi_debug_t",debug_t,".csv"),Tables.table([π[1:NC,1:NC,1,debug_t] π[1:NC,1:NC,2,debug_t] π[1:NC,1:NC,3,debug_t]];header=π_colnames))
                 end
-                =#
-                res_dynamic[n,k,t] = K̂[n,k,t]/(K̂[n,k,t]-(1-δ[k]))/ρ/
-                    (α[k]*rK[n,k,t+1]/Xᶠ[n,k,t]+X̂ᶠ[n,k,t]*((1-α[k])+(p̂[n,k,t]*K̂[n,k,t]/X̂ᶠ[n,k,t])^α[k]*((1-δ[k])/(K̂[n,k,t]-(1-δ[k])))/χ̂[n,k,t]))-1.0
                 # Update K̂ᵏₜ₊₁
                 K̂[n,k,t+1] = χ̂[n,k,t]*(X̂ᶠ[n,k,t]/p̂[n,k,t]/K̂[n,k,t])^α[k]*(K̂[n,k,t]-(1-δ[k]))+(1-δ[k])
+                #=
+                K̂_thres = 0.9
+                K̂[n,k,t+1] = K̂[n,k,t+1]*(K̂[n,k,t+1]>K̂_thres)+K̂_thres*(K̂[n,k,t+1]<=K̂_thres)
+                negative_penalty[n,k,t] += (K̂[n,k,t+1]-K̂_thres)^2*(K̂[n,k,t+1]<=K̂_thres)
+                =#
+                res_dynamic[n,k,t] = (K̂[n,k,t]/(K̂[n,k,t]-(1-δ[k]))/ρ/
+                    (α[k]*rK[n,k,t+1]/Xᶠ[n,k,t]+X̂ᶠ[n,k,t]*((1-α[k])+(p̂[n,k,t]*K̂[n,k,t]/X̂ᶠ[n,k,t])^α[k]*((1-δ[k])/
+                    (K̂[n,k,t]-(1-δ[k])))/χ̂[n,k,t]))-1)
+                res_dynamic[n,k,t] += negative_penalty[n,k,t]
+                #=
+                if K̂[n,k,t+1] < 0.8
+                    res_dynamic[n,k,t] *= 100
+                end
+                =#
+                if K̂[n,k,t+1]<0
+                    println(n)
+                    println(k)
+                    println(t)
+                    println(negative_penalty[n,k,t])
+                    println(maximum(negative_penalty[:,:,:]))
+                    println(χ̂[n,k,t])
+                    println(X̂ᶠ[n,k,t])
+                    println(p̂[n,k,t])
+                    println(K̂[n,k,t])
+                    error(K̂[n,k,t+1])
+                end
             end
         end
 
@@ -392,7 +611,7 @@ function dynamic_problem!(
     # println("Start to evaluate terminal conditions.")
     for n = 1:NC
         for k = 1:NK
-            res_dynamic[n,k,T] = K̂[n,k,T]/1-1
+            res_dynamic[n,k,T] = (abs(K̂[n,k,T]/1-1)+abs(Ŷ[n,k,T-1]/1-1))
         end
     end
     # println("Successfully evaluate terminal conditions.")
@@ -401,5 +620,5 @@ function dynamic_problem!(
     colnames = [Symbol(names) for names in colnames]
     CSV.write(string("dynamic",T,".csv"),Tables.table([Ŷ[1:NC,1:NS,T-1] K̂[1:NC,1:NK,T]];header=colnames))
     =#
-    return res_dynamic, K̂, Ŷ
+    return res_dynamic, negative_penalty, K̂, Ŷ
 end
